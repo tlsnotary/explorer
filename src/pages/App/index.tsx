@@ -1,8 +1,10 @@
 import React, { ReactElement } from 'react';
-import "./index.scss";
+import './index.scss';
 import Button from '../../components/Button';
+import Header from '../../components/Header';
 import { useDispatch } from 'react-redux';
 import { asyncIncrementCounter, incrementCounter, useCounter, useLoading } from '../../store/counter';
+
 
 export default function App(): ReactElement {
   const dispatch = useDispatch();
@@ -11,6 +13,7 @@ export default function App(): ReactElement {
 
   return (
     <div className="app flex flex-col gap-4">
+      <Header />
       {`Clicked ${counter} times`}
       <Button className="w-fit" onClick={() => dispatch(incrementCounter())}>
         Increment
