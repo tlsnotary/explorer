@@ -18,11 +18,11 @@ export default function NotaryKey(): ReactElement {
 
 
   return (
-    <details>
+    <details className="w-3/4 m-auto">
       <summary className="text-2xl font-bold cursor-pointer">
         Change Notary Public Key:
       </summary>
-      <textarea className="w-full h-40 rounded bg-gray-800 text-white" value={notaryKey} onInput={(e) => handleInput(e)}>
+      <textarea className="w-full h-40 rounded bg-gray-800 text-white resize-none" value={notaryKey} onChange={(e) => handleInput(e)}>
       </textarea>
       <button className="button" onClick={() => setNotaryKey('123')}>
         notary.pse.dev
