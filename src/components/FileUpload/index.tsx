@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
-
+import NotaryKey from '../NotaryKey';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -28,7 +28,7 @@ export default function FileDrop(): ReactElement {
 
 
 return (
-  <div className="flex flex-col items-center justify-center h-screen w-4/5 m-auto ">
+  <div className="h-screen w-4/5 m-auto ">
     <label htmlFor="file-upload" className="flex flex-col items-center justify-start h-1/2 w-full">
     <div
       className="flex flex-col items-center justify-center w-full h-full border-dashed border-gray-400 rounded-lg border-2 cursor-pointer bg-gray-800"
@@ -37,7 +37,7 @@ return (
     >
      <i className="text-white fa-solid fa-upload text-6xl"></i>
      <br></br>
-     <p className='font-bold font-medium text-white'>Drop your "proof.json" file here or click to select</p>
+     <p className="font-bold font-medium text-white">Drop your "proof.json" file here or click to select</p>
      </div>
      <input
      id="file-upload"
@@ -46,6 +46,7 @@ return (
      accept=".json"
      className="w-full h-full hidden" />
     </label>
+    <NotaryKey />
   </div>
   )
 }

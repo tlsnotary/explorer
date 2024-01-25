@@ -17,17 +17,17 @@ export type Action<payload = any> = {
 };
 
 type State = {
-  jsonFiles: File[];
+  proofs: File[];
 }
 
 const initState: State = {
-  jsonFiles: []
+  proofs: []
 }
 
 function handleFile(state: State, action: Action): State {
   return {
     ...state,
-    jsonFiles: [...state.jsonFiles, action.payload]
+    proofs: [...state.proofs, action.payload]
   }
 }
 

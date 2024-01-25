@@ -5,6 +5,7 @@ import Header from '../../components/Header';
 import { useDispatch } from 'react-redux';
 import { asyncIncrementCounter, incrementCounter, useCounter, useLoading } from '../../store/counter';
 import FileDrop from '../../components/FileUpload';
+import NotaryKey from '../../components/NotaryKey';
 
 export default function App(): ReactElement {
   const dispatch = useDispatch();
