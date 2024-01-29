@@ -1,0 +1,45 @@
+.button {
+  @apply bg-slate-100;
+  @apply text-slate-500;
+  @apply font-bold;
+  @apply px-2 py-0.5;
+  user-select: none;
+
+  &:hover {
+    @apply text-slate-600;
+    @apply bg-slate-200;
+  }
+
+  &:active {
+    @apply text-slate-700;
+    @apply bg-slate-300;
+  }
+
+  &--primary {
+    @apply bg-primary/[0.8];
+    @apply text-white;
+
+    &:hover {
+      @apply bg-primary/[0.9];
+      @apply text-white;
+    }
+
+    &:active {
+      @apply bg-primary;
+      @apply text-white;
+    }
+  }
+
+  &:disabled {
+    @apply opacity-50;
+    @apply select-none;
+
+    &:hover {
+      @apply text-slate-400;
+    }
+
+    &:active {
+      @apply text-slate-400;
+    }
+  }
+}
