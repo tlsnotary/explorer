@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback } from 'react';
+import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
 import NotaryKey from '../NotaryKey';
@@ -6,25 +6,43 @@ import NotaryKey from '../NotaryKey';
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
 
+  const [error, setError] = useState<string | null>(null);
+
+
+  const handleFileUpload = useCallback((file: File): void => {
+    if (file.type !== 'application/json') {
+      setError('Please upload a valid JSON file.');
+      return;
+    }
+
+    if (file.size >= 1024 * 1024) {
+      setError('File size exceeds the maximum limit (1MB).');
+      return;
+    }
+    setError(null);
+    dispatch(uploadFile(file));
+
+}, [dispatch])
+
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
 
     const files = e.dataTransfer.files;
 
     if (files.length > 0) {
-      dispatch(uploadFile(files[0]));
+      handleFileUpload(files[0]);
     }
-}, [dispatch]);
+}, [handleFileUpload]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
     const files = e.target.files;
     if (files && files.length > 0) {
-      dispatch(uploadFile(files[0]));
+      handleFileUpload(files[0]);
     }
   },
-  [dispatch]);
+  [handleFileUpload]);
 
 
 return (
@@ -46,6 +64,7 @@ return (
      accept=".json"
      className="w-full h-full hidden" />
     </label>
+    {error && <p className="text-red-500 font-bold">{error}</p>}
     <NotaryKey />
   </div>
   )
