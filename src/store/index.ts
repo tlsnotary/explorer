@@ -3,6 +3,7 @@ import thunk from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import proofUpload from './proofupload';
 
+
 const rootReducer = combineReducers({
   proofUpload
 });

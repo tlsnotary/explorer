@@ -128,6 +128,15 @@ var options = {
     new webpack.ProgressPlugin(),
     // expose and write the allowed env vars on the compiled bundle
     new webpack.EnvironmentPlugin(["NODE_ENV"]),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: "node_modules/tlsn-js/build",
+          to: path.join(__dirname, "build"),
+          force: true,
+        },
+      ]
+    }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "static", "index.html"),
       filename: "index.html",
