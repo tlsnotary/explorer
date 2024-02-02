@@ -1,15 +1,24 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
+import { prove, verify } from 'tlsn-js'
+import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
 
+  const pk = `-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBv36FI4ZFszJa0DQFJ3wWCXvVLFr\ncRzMG5kaTeHGoSzDu6cFqx3uEWYpFGo6C0EOUgf+mEgbktLrXocv5yHzKg==\n-----END PUBLIC KEY-----`;
+
+  const notaryPseKey = `-----BEGIN PUBLIC KEY-----
+  MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExpX/4R4z40gI6C/j9zAM39u58LJu
+  3Cx5tXTuqhhu/tirnBi5GniMmspOTEsps4ANnPLpMmMSfhJ+IFHbc3qVOA==
+  -----END PUBLIC KEY-----`
+
   const [error, setError] = useState<string | null>(null);
 
 
-  const handleFileUpload = useCallback((file: File): void => {
+  const handleFileUpload = useCallback(async (file: any): Promise<void> => {
     if (file.type !== 'application/json') {
       setError('Please upload a valid JSON file.');
       return;
@@ -20,6 +29,11 @@ export default function FileDrop(): ReactElement {
       return;
     }
     setError(null);
+
+    const proofContent = await readFileAsync(file);
+    const verifiedProof = await verify(JSON.parse(proofContent), pk);
+
+    console.log('PROOF', verifiedProof);
     dispatch(uploadFile(file));
 
 }, [dispatch])
