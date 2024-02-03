@@ -2,10 +2,11 @@ import { applyMiddleware, combineReducers, createStore } from 'redux';
 import thunk from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import proofUpload from './proofupload';
-
+import notaryKey from './notaryKey';
 
 const rootReducer = combineReducers({
-  proofUpload
+  proofUpload,
+  notaryKey
 });
 
 export type AppRootState = ReturnType<typeof rootReducer>;
