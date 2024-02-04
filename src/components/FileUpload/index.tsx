@@ -4,17 +4,16 @@ import { uploadFile } from '../../store/proofupload';
 import { prove, verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
+import ProofDetails from '../ProofDetails';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
 
-  // const pk = `-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBv36FI4ZFszJa0DQFJ3wWCXvVLFr\ncRzMG5kaTeHGoSzDu6cFqx3uEWYpFGo6C0EOUgf+mEgbktLrXocv5yHzKg==\n-----END PUBLIC KEY-----`;
-
-  // const notaryPseKey = `-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExpX/4R4z40gI6C/j9zAM39u58LJu\n3Cx5tXTuqhhu/tirnBi5GniMmspOTEsps4ANnPLpMmMSfhJ+IFHbc3qVOA==\n-----END PUBLIC KEY-----`;
-
-
   const [error, setError] = useState<string | null>(null);
+  const [verifiedProof, setVerifiedProof] = useState<any>(null);
+
   const notaryKey = useSelector((state: any) => state.notaryKey.key);
+
 
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
@@ -31,8 +30,8 @@ export default function FileDrop(): ReactElement {
 
     const proofContent = await readFileAsync(file);
     const verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
+    setVerifiedProof(verifiedProof);
 
-    console.log('PROOF', verifiedProof);
     dispatch(uploadFile(file));
 
 }, [dispatch])
@@ -80,6 +79,8 @@ return (
     {error && <p className="text-red-500 font-bold">{error}</p>}
     <br></br>
     <NotaryKey />
+    <br></br>
+    <ProofDetails proof={verifiedProof} />
   </div>
   )
 }
