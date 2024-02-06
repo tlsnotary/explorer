@@ -39,7 +39,6 @@ export default function NotaryKey(): ReactElement {
     }
   }
 
-
   return (
     <details className="w-3/4 m-auto">
       <summary className="text-2xl font-bold cursor-pointer">
@@ -47,13 +46,14 @@ export default function NotaryKey(): ReactElement {
       </summary>
       <textarea className="w-full h-40 rounded bg-gray-800 text-white resize-none" value={notaryKey} onChange={(e) => handleInput(e)}>
       </textarea>
+      {errors && <p className="text-red-500">{errors}</p>}
       <button className="button" onClick={(e) => handleInput(e, notaryPseKey)}>
         notary.pse.dev
       </button>
       <button className="button" onClick={(e) => handleInput(e, defaultKey)}>
         Default
       </button>
-      {errors && <p className="text-red-500">{errors}</p>}
+
     </details>
   )
 }
