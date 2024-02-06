@@ -18,12 +18,14 @@ export default function NotaryKey(): ReactElement {
     const pemRegex = /^-----BEGIN (?:[A-Z]+ )?PUBLIC KEY-----\n(?:[A-Za-z0-9+\/=]+\n)+-----END (?:[A-Z]+ )?PUBLIC KEY-----$/;
     if (!pemRegex.test(key)) {
       setError('Key does not match PEM format.');
+      return false;
     }
     try {
       const base64Data = key.replace(/-----BEGIN (?:[A-Z]+ )?PUBLIC KEY-----\n/, '').replace(/\n-----END (?:[A-Z]+ )?PUBLIC KEY-----$/, '');
       atob(base64Data);
     } catch (err) {
       setError('Invalid Base64 encoding.');
+      return false;
     }
     return true;
   };
@@ -35,6 +37,7 @@ export default function NotaryKey(): ReactElement {
       setNotaryKey(keyInput);
       dispatch(setKey(keyInput));
     } else {
+      setNotaryKey(keyInput);
       setError('Invalid PEM-encoded public key.');
     }
   }
