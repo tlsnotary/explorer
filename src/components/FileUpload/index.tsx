@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
-import { prove, verify } from 'tlsn-js'
+import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
@@ -13,7 +13,6 @@ export default function FileDrop(): ReactElement {
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
 
   const notaryKey = useSelector((state: any) => state.notaryKey.key);
-
 
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
@@ -29,8 +28,13 @@ export default function FileDrop(): ReactElement {
     setError(null);
 
     const proofContent = await readFileAsync(file);
-    const verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
-    setVerifiedProof(verifiedProof);
+    try {
+      const verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
+      setVerifiedProof(verifiedProof);
+    } catch(e) {
+      setError(e as string);
+      return;
+    }
 
     dispatch(uploadFile(file));
 
@@ -53,8 +57,7 @@ export default function FileDrop(): ReactElement {
     if (files && files.length > 0) {
       handleFileUpload(files[0]);
     }
-  },
-  [handleFileUpload]);
+  }, [handleFileUpload]);
 
 
 return (
@@ -68,6 +71,7 @@ return (
      <i className="text-white fa-solid fa-upload text-6xl"></i>
      <br></br>
      <p className="font-bold font-medium text-white">Drop your "proof.json" file here or click to select</p>
+     {error && <p className="text-red-500 font-bold">{error}</p>}
      </div>
      <input
      id="file-upload"
@@ -76,11 +80,11 @@ return (
      accept=".json"
      className="w-full h-full hidden" />
     </label>
-    {error && <p className="text-red-500 font-bold">{error}</p>}
     <br></br>
     <NotaryKey />
     <br></br>
-    <ProofDetails proof={verifiedProof} />
+    <br></br>
+    {!error && <ProofDetails proof={verifiedProof} /> }
   </div>
   )
 }
