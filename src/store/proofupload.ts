@@ -1,12 +1,18 @@
-
+import type { Proof } from '../components/types/types'
 
 export enum ActionType {
-  AddFile = 'proofupload/addFile'
+  AddFile = 'proofupload/addFile',
+  SelectProof = 'proofupload/selectProof'
 }
 
-export const uploadFile = (file: File) => ({
+export const uploadFile = (fileName: string, proof: Proof) => ({
   type: ActionType.AddFile,
-  payload: file
+  payload: { fileName, proof }
+})
+
+export const selectProof = (proof: string) => ({
+  type: ActionType.SelectProof,
+  payload: proof
 })
 
 export type Action<payload = any> = {
@@ -17,7 +23,8 @@ export type Action<payload = any> = {
 };
 
 type State = {
-  proofs: File[];
+  proofs: { fileName: string, proof: Proof }[];
+  selectedProof?: {fileName: string, proof: Proof} | null;
 }
 
 const initState: State = {
@@ -31,11 +38,20 @@ function handleFile(state: State, action: Action): State {
   }
 }
 
+function handleProofSelect(state: State, action: Action): State {
+  return {
+    ...state,
+    selectedProof: action.payload
+  }
+
+}
 
 export default function proofUpload(state = initState, action: Action): State {
   switch (action.type) {
     case ActionType.AddFile:
       return handleFile(state, action);
+    case ActionType.SelectProof:
+      return handleProofSelect(state, action);
     default:
       return state;
   }
