@@ -5,6 +5,7 @@ import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
+import type { Proof } from '../types/types';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -26,17 +27,17 @@ export default function FileDrop(): ReactElement {
       return;
     }
     setError(null);
-
+    let verifiedProof: Proof;
     const proofContent = await readFileAsync(file);
     try {
-      const verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
+      verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
       setError(e as string);
       return;
     }
-
-    dispatch(uploadFile(file));
+    console.log(verifiedProof);
+    dispatch(uploadFile(file.name, verifiedProof));
 
 }, [dispatch])
 
