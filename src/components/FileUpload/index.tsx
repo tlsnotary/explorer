@@ -36,7 +36,6 @@ export default function FileDrop(): ReactElement {
       setError(e as string);
       return;
     }
-    console.log(verifiedProof);
     dispatch(uploadFile(file.name, verifiedProof));
 
 }, [dispatch])
