@@ -11,7 +11,6 @@ export default function App(): ReactElement {
   return (
     <div className="app flex flex-col gap-4">
       <Header />
-      <ProofSelect />
       <Routes>
         <Route path="/" element={<FileDrop />} />
       </Routes>

@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { formatStrings, formatTime, extractHTML } from '../../utils';
 import { useSelector } from 'react-redux';
-
+import ProofSelect from '../ProofSelect';
 export default function ProofDetails(proof: any): ReactElement {
 
   const selectedProof = useSelector((state: any) => state.proofUpload.selectedProof);
@@ -10,11 +10,12 @@ export default function ProofDetails(proof: any): ReactElement {
 
 
   // TODO - Format proof details for redacted data
-  
+
   return (
     <div>
       {proofToDisplay && (
         <div className="flex flex-col gap-3 text-left items-center">
+          <ProofSelect />
           <span className="font-bold text-2xl">Server Domain:</span>
           <div className="flex items-center h-12 w-4/5 bg-gray-800 text-white rounded">{proofToDisplay.serverName}</div>
           <span className="font-bold text-2xl">Notarization Time:</span>
@@ -39,11 +40,6 @@ export default function ProofDetails(proof: any): ReactElement {
             </summary>
             {formatStrings(proofToDisplay.recv)}
           </details>
-        </div>
-      )}
-      {!proofToDisplay && (
-        <div className="text-red-500 font-bold">
-          Upload a proof
         </div>
       )}
     </div>

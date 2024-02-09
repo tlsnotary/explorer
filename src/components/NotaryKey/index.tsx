@@ -56,7 +56,6 @@ export default function NotaryKey(): ReactElement {
       <button className="button" onClick={(e) => handleInput(e, defaultKey)}>
         Default
       </button>
-
     </details>
   )
 }

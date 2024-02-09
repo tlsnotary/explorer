@@ -1,5 +1,4 @@
 import React, { ReactElement } from 'react';
-import classNames from 'classnames';
 import './index.scss';
 
 export default function Header(): ReactElement {
