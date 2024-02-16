@@ -2,15 +2,15 @@ import React, { ReactElement } from 'react';
 import { formatStrings, formatTime, extractHTML } from '../../utils';
 import { useSelector } from 'react-redux';
 import ProofSelect from '../ProofSelect';
+
+
 export default function ProofDetails(proof: any): ReactElement {
 
   const selectedProof = useSelector((state: any) => state.proofUpload.selectedProof);
 
   const proofToDisplay = selectedProof?.proof || proof?.proof;
 
-
   // TODO - Format proof details for redacted data
-
   return (
     <div>
       {proofToDisplay && (

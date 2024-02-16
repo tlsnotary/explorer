@@ -1,34 +1,52 @@
 import React, { FormEvent, ReactElement, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setKey } from '../../store/notaryKey';
-
+import keys from '../../utils/keys.json';
 
 export default function NotaryKey(): ReactElement {
   const dispatch = useDispatch();
 
-  const defaultKey: string = `-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBv36FI4ZFszJa0DQFJ3wWCXvVLFr\ncRzMG5kaTeHGoSzDu6cFqx3uEWYpFGo6C0EOUgf+mEgbktLrXocv5yHzKg==\n-----END PUBLIC KEY-----`;
-  const notaryPseKey: string = `-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExpX/4R4z40gI6C/j9zAM39u58LJu\n3Cx5tXTuqhhu/tirnBi5GniMmspOTEsps4ANnPLpMmMSfhJ+IFHbc3qVOA==\n-----END PUBLIC KEY-----`;
+  const defaultKey: string = keys.defaultKey
+  const notaryPseKey: string = keys.notaryPseKey
 
   const [notaryKey, setNotaryKey] = useState<string>(defaultKey);
   const [errors, setError] = useState<string | null>(null);
 
 
-
   const isValidPEMKey = (key: string): boolean => {
-    const pemRegex = /^-----BEGIN (?:[A-Z]+ )?PUBLIC KEY-----\n(?:[A-Za-z0-9+\/=]+\n)+-----END (?:[A-Z]+ )?PUBLIC KEY-----$/;
-    if (!pemRegex.test(key)) {
-      setError('Key does not match PEM format.');
-      return false;
-    }
     try {
-      const base64Data = key.replace(/-----BEGIN (?:[A-Z]+ )?PUBLIC KEY-----\n/, '').replace(/\n-----END (?:[A-Z]+ )?PUBLIC KEY-----$/, '');
-      atob(base64Data);
+
+      const trimmedKey = key.trim();
+
+
+      if (!trimmedKey.startsWith('-----BEGIN PUBLIC KEY-----') || !trimmedKey.endsWith('-----END PUBLIC KEY-----')) {
+        setError('Invalid PEM format: header or footer missing');
+        return false;
+      }
+
+
+      const keyContent = trimmedKey
+        .replace('-----BEGIN PUBLIC KEY-----', '')
+        .replace('-----END PUBLIC KEY-----', '')
+        .trim();
+
+      try {
+        const decodedKeyContent = atob(keyContent);
+
+      } catch (err) {
+        console.log('here');
+        setError('Invalid Base64 encoding');
+        return false;
+      }
+
+      return true;
     } catch (err) {
-      setError('Invalid Base64 encoding.');
+
+      console.error('Error validating key:', err);
       return false;
     }
-    return true;
   };
+
 
   const handleInput = (e: FormEvent<HTMLTextAreaElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>, key?: string | undefined) => {
     setError(null);
@@ -38,7 +56,6 @@ export default function NotaryKey(): ReactElement {
       dispatch(setKey(keyInput));
     } else {
       setNotaryKey(keyInput);
-      setError('Invalid PEM-encoded public key.');
     }
   }
 
