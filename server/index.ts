@@ -1,3 +1,3 @@
 import express from 'express';
 
-console.log('hi')
+console.log('hi');
