@@ -5,11 +5,13 @@
   "main": "index.js",
   "scripts": {
     "build:ui": "NODE_ENV=production webpack --config webpack.web.config.js",
+    "watch:ui": "NODE_ENV=development webpack --config webpack.web.config.js --watch",
+    "dev:ui": "NODE_ENV=development webpack-dev-server  --config webpack.web.config.js --hot",
     "build:server": "NODE_ENV=production webpack --config webpack.server.config.js",
-    "watch:server": "webpack --config webpack.server.config.js --watch",
-    "nodemon:server": "nodemon build/server/index.bundle.js",
+    "watch:server": "NODE_ENV=development webpack --config webpack.server.config.js --watch",
+    "nodemon:server": "NODE_ENV=development nodemon build/server/index.bundle.js",
     "dev:server": "NODE_ENV=development concurrently npm:watch:server npm:nodemon:server",
-    "dev:ui": "NODE_ENV=development webpack-dev-server  --config webpack.web.config.js --hot"
+    "dev": "concurrently npm:watch:ui npm:dev:server"
   },
   "repository": {
     "type": "git",
