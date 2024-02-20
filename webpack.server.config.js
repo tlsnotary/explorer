@@ -15,6 +15,9 @@ const options = {
   entry: {
     index: path.join(__dirname, "server", "index.ts"),
   },
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+  },
   output: {
     filename: "[name].bundle.js",
     path: path.resolve(__dirname, "build", "server"),
