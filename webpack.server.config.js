@@ -9,7 +9,8 @@ const ASSET_PATH = process.env.ASSET_PATH || "/";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-var options = {
+const options = {
+  target: "node",
   mode: process.env.NODE_ENV || "development",
   entry: {
     index: path.join(__dirname, "server", "index.ts"),
@@ -22,6 +23,10 @@ var options = {
   },
   module: {
     rules: [
+      {
+        test: /\.node$/,
+        use: 'node-loader',
+      },
       {
         test: /\.(ts|tsx)$/,
         exclude: /node_modules/,
