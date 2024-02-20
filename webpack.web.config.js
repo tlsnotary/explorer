@@ -33,11 +33,11 @@ var options = {
     /ResizeObserver loop completed with undelivered notifications/
   ],
   entry: {
-    index: path.join(__dirname, "src", "index.tsx"),
+    index: path.join(__dirname, "web", "index.tsx"),
   },
   output: {
     filename: "[name].bundle.js",
-    path: path.resolve(__dirname, "build"),
+    path: path.resolve(__dirname, "build", "ui"),
     clean: true,
     publicPath: ASSET_PATH,
   },
@@ -46,7 +46,7 @@ var options = {
       {
         // look for .css or .scss files
         test: /\.(css|scss)$/,
-        // in the `src` directory
+        // in the `web` directory
         use: [
           {
             loader: "style-loader",
@@ -132,7 +132,7 @@ var options = {
       patterns: [
         {
           from: "node_modules/tlsn-js/build",
-          to: path.join(__dirname, "build"),
+          to: path.join(__dirname, "build", "ui"),
           force: true,
         },
       ]

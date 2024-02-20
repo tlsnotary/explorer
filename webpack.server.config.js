@@ -37,7 +37,6 @@ var options = {
     ],
   },
   plugins: [
-    isDevelopment && new ReactRefreshWebpackPlugin(),
     new CleanWebpackPlugin({ verbose: false }),
     new webpack.ProgressPlugin(),
     new webpack.EnvironmentPlugin(["NODE_ENV"]),
