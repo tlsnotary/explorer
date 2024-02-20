@@ -11,6 +11,8 @@
     "watch:server": "NODE_ENV=development webpack --config webpack.server.config.js --watch",
     "nodemon:server": "NODE_ENV=development nodemon build/server/index.bundle.js",
     "dev:server": "NODE_ENV=development concurrently npm:watch:server npm:nodemon:server",
+    "start": "node build/server/index.bundle.js",
+    "build": "concurrently npm:build:ui npm:build:server",
     "dev": "concurrently npm:watch:ui npm:dev:server"
   },
   "repository": {
