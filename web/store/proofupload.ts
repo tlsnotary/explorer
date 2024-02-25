@@ -2,17 +2,23 @@ import type { Proof } from '../components/types/types'
 
 export enum ActionType {
   AddFile = 'proofupload/addFile',
-  SelectProof = 'proofupload/selectProof'
+  SelectProof = 'proofupload/selectProof',
+  UploadFileSuccess = 'proofupload/uploadFileSuccess',
 }
 
-export const uploadFile = (fileName: string, proof: Proof) => ({
+export const uploadFile = (fileName: string, proof: Proof, ipfsCID: string) => ({
   type: ActionType.AddFile,
-  payload: { fileName, proof }
+  payload: { fileName, proof, ipfsCID }
 })
 
 export const selectProof = (proof: string) => ({
   type: ActionType.SelectProof,
   payload: proof
+})
+
+export const uploadFileSuccess = (cid: string) => ({
+  type: ActionType.UploadFileSuccess,
+  payload: cid
 })
 
 export type Action<payload = any> = {
@@ -34,7 +40,8 @@ const initState: State = {
 function handleFile(state: State, action: Action): State {
   return {
     ...state,
-    proofs: [...state.proofs, action.payload]
+    proofs: [...state.proofs, action.payload],
+    selectedProof: action.payload
   }
 }
 
@@ -43,7 +50,6 @@ function handleProofSelect(state: State, action: Action): State {
     ...state,
     selectedProof: action.payload
   }
-
 }
 
 export default function proofUpload(state = initState, action: Action): State {
