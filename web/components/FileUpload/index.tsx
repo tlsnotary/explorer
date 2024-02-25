@@ -6,6 +6,8 @@ import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
+import { uploadFileToIpfs } from '../../store/thunks';
+import type {} from 'redux-thunk/extend-redux';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -28,15 +30,18 @@ export default function FileDrop(): ReactElement {
     }
     setError(null);
     let verifiedProof: Proof;
+    let ipfsCid: string;
     const proofContent = await readFileAsync(file);
     try {
+      ipfsCid = await dispatch(uploadFileToIpfs(file));
+      console.log(ipfsCid);
       verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
       setError(e as string);
       return;
     }
-    dispatch(uploadFile(file.name, verifiedProof));
+    dispatch(uploadFile(file.name, verifiedProof, ipfsCid));
 
 }, [dispatch])
 

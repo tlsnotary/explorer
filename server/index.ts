@@ -30,7 +30,7 @@ app.post('/upload', async (req, res) => {
     // @ts-ignore
     const data = file.data;
     const cid = await addBytes(data);
-    res.send(cid.toString());
+    res.send(JSON.stringify(cid.toString()));
 
     return;
   }
