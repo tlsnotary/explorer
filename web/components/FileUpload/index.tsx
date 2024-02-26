@@ -40,7 +40,6 @@ export default function FileDrop(): ReactElement {
       setError(e as string);
       return;
     }
-    console.log(ipfsCid);
     dispatch(uploadFile(file.name, verifiedProof, ipfsCid));
 
 }, [dispatch])

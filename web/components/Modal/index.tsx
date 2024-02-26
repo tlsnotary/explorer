@@ -39,7 +39,6 @@ const Modal: FC<ModalProps> = ({ isOpen, closeModal, children }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="flex flex-col items-center justify-items-center content-center bg-white p-8 rounded-lg modal-content">
-        <span className="absolute top-0 right-0 cursor-pointer" onClick={closeModal}>&times;</span>
         {children}
       </div>
     </div>

@@ -13,7 +13,6 @@ export default function SharedProof(): ReactElement {
 
   const notaryKey = useSelector((state: any) => state.notaryKey.key);
 
-  console.log(cid);
   useEffect(() => {
     async function fetchFile() {
       if (!cid) {
