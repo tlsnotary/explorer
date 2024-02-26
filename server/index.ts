@@ -1,6 +1,7 @@
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
+import path from 'path';
 
 import { addBytes, getCID } from './services/ipfs';
 
@@ -25,6 +26,8 @@ app.use(fileUpload({
   limits: { fileSize: 1024 * 1024 }, // 1mb file limit
 }));
 
+
+
 app.post('/upload', async (req, res) => {
   for (const file of Object.values(req.files!)) {
     // @ts-ignore
@@ -46,6 +49,10 @@ app.get('/ipfs/:cid', async (req, res) => {
   res.set('Content-Type', 'application/octet-stream');
   res.set('Content-Disposition', `attachment; filename=${cid}.json`);
   readStream.pipe(res);
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../ui', 'index.html'));
 });
 
 app.listen(port, () => {

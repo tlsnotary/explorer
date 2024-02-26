@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useRef } from 'react';
 
 
 export const readFileAsync = (file: File): Promise<string> => {
@@ -49,3 +49,12 @@ export const extractHTML = (receivedData: string): ReactElement => {
   return <iframe className="w-full h-auto" srcDoc={html}></iframe>
 
 };
+
+
+export const copyText = async (text: string): Promise<void> => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    console.error(e);
+  }
+}

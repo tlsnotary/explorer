@@ -34,13 +34,13 @@ export default function FileDrop(): ReactElement {
     const proofContent = await readFileAsync(file);
     try {
       ipfsCid = await dispatch(uploadFileToIpfs(file));
-      console.log(ipfsCid);
       verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
       setError(e as string);
       return;
     }
+    console.log(ipfsCid);
     dispatch(uploadFile(file.name, verifiedProof, ipfsCid));
 
 }, [dispatch])
