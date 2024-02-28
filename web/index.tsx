@@ -3,6 +3,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import type {} from 'redux-thunk/extend-redux';
 import store from './store';
 import App from './pages/App';
 

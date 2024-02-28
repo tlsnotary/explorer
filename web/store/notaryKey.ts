@@ -1,3 +1,5 @@
+import { AppRootState } from '.';
+import { useSelector } from 'react-redux';
 import keys from '../utils/keys.json';
 
 export enum ActionType {
@@ -34,6 +36,9 @@ function handleKey(state: State, action: Action): State {
   }
 }
 
+export const useNotaryKey = () => {
+  return useSelector((state: AppRootState) => state.notaryKey.key);
+}
 
 export default function notaryKey(state = initState, action: Action): State {
   switch (action.type) {

@@ -6,8 +6,8 @@ import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
-import { uploadFileToIpfs } from '../../store/thunks';
-import type {} from 'redux-thunk/extend-redux';
+import { uploadFileToIpfs } from '../../store/upload';
+import { useNotaryKey } from '../../store/notaryKey';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -15,7 +15,7 @@ export default function FileDrop(): ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
 
-  const notaryKey = useSelector((state: any) => state.notaryKey.key);
+  const notaryKey = useNotaryKey();
 
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
