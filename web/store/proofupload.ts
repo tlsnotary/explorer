@@ -1,4 +1,8 @@
+import { AppRootState } from '.';
 import type { Proof } from '../components/types/types'
+import { useSelector } from 'react-redux';
+
+
 
 export enum ActionType {
   AddFile = 'proofupload/addFile',
@@ -6,9 +10,9 @@ export enum ActionType {
   UploadFileSuccess = 'proofupload/uploadFileSuccess',
 }
 
-export const uploadFile = (fileName: string, proof: Proof, ipfsCID: string) => ({
+export const uploadFile = (fileName: string, proof: Proof) => ({
   type: ActionType.AddFile,
-  payload: { fileName, proof, ipfsCID }
+  payload: { fileName, proof }
 })
 
 export const selectProof = (proof: string) => ({
@@ -30,7 +34,7 @@ export type Action<payload = any> = {
 
 type State = {
   proofs: { fileName: string, proof: Proof }[];
-  selectedProof?: {fileName: string, proof: Proof} | null;
+  selectedProof?: { fileName: string, proof: Proof, ipfsCID?: string } | null;
 }
 
 const initState: State = {
@@ -52,12 +56,29 @@ function handleProofSelect(state: State, action: Action): State {
   }
 }
 
+function handleProofUpload(state: State, action: Action): State {
+  return {
+    ...state,
+    // @ts-ignore
+    selectedProof: {
+      ...state.selectedProof,
+      ipfsCID: action.payload
+    }
+  }
+}
+
+export const useSelectedProof = () => {
+  return useSelector((state: AppRootState) => state.proofUpload.selectedProof);
+}
+
 export default function proofUpload(state = initState, action: Action): State {
   switch (action.type) {
     case ActionType.AddFile:
       return handleFile(state, action);
     case ActionType.SelectProof:
       return handleProofSelect(state, action);
+    case ActionType.UploadFileSuccess:
+      return handleProofUpload(state, action);
     default:
       return state;
   }

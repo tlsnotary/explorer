@@ -1,6 +1,6 @@
 import React, { ReactElement, useCallback, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { uploadFile } from '../../store/proofupload';
+import { useDispatch } from 'react-redux';
+import { uploadFile, uploadFileSuccess } from '../../store/proofupload';
 import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
@@ -11,11 +11,12 @@ import { useNotaryKey } from '../../store/notaryKey';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
+  const notaryKey = useNotaryKey();
+
 
   const [error, setError] = useState<string | null>(null);
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
 
-  const notaryKey = useNotaryKey();
 
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
@@ -40,8 +41,8 @@ export default function FileDrop(): ReactElement {
       setError(e as string);
       return;
     }
-    dispatch(uploadFile(file.name, verifiedProof, ipfsCid));
-
+    dispatch(uploadFile(file.name, verifiedProof));
+    dispatch(uploadFileSuccess(ipfsCid))
 }, [dispatch])
 
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
