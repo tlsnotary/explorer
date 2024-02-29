@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
