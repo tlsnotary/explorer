@@ -1,12 +1,11 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { uploadFile, uploadFileSuccess } from '../../store/proofupload';
+import { uploadFile } from '../../store/proofupload';
 import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
-import { uploadFileToIpfs } from '../../store/upload';
 import { useNotaryKey } from '../../store/notaryKey';
 
 export default function FileDrop(): ReactElement {
@@ -16,8 +15,7 @@ export default function FileDrop(): ReactElement {
 
   const [error, setError] = useState<string | null>(null);
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
-
-
+  const [file, setFile] = useState<File | null>(null);
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
     if (file.type !== 'application/json') {
@@ -29,12 +27,11 @@ export default function FileDrop(): ReactElement {
       setError('File size exceeds the maximum limit (1MB).');
       return;
     }
+    setFile(file);
     setError(null);
     let verifiedProof: Proof;
-    let ipfsCid: string;
     const proofContent = await readFileAsync(file);
     try {
-      ipfsCid = await dispatch(uploadFileToIpfs(file));
       verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
@@ -42,7 +39,6 @@ export default function FileDrop(): ReactElement {
       return;
     }
     dispatch(uploadFile(file.name, verifiedProof));
-    dispatch(uploadFileSuccess(ipfsCid))
 }, [dispatch])
 
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -89,7 +85,7 @@ return (
     <NotaryKey />
     <br></br>
     <br></br>
-    {!error && <ProofDetails proof={verifiedProof} /> }
+    {!error && <ProofDetails proof={verifiedProof} file={file} />}
   </div>
   )
 }

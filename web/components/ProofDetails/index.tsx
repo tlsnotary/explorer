@@ -1,24 +1,32 @@
-import React, { ReactElement, useState, useCallback } from 'react';
+import React, { ReactElement, useState, useCallback, useEffect } from 'react';
 import { formatStrings, formatTime, extractHTML } from '../../utils';
 import { useSelector, useDispatch } from 'react-redux';
 import ProofSelect from '../ProofSelect';
 import Modal from '../Modal';
 import { copyText } from '../../utils';
-import { useSelectedProof } from '../../store/proofupload';
+import { uploadFileSuccess, useSelectedProof } from '../../store/proofupload';
 import { uploadFileToIpfs } from '../../store/upload';
 interface ProofDetailsProps {
   proof: any;
   cid?: string;
+  file?: File | null;
 }
 
-const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid}): ReactElement => {
+const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactElement => {
   const dispatch = useDispatch();
 
   const [isOpen, setIsOpen] = useState(false);
   const [accepted, setAccepted] = useState(false);
-
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  console.log(fileToUpload)
   const selectedProof = useSelectedProof()
   const proofs = useSelector((state: any) => state.proofUpload.proofs);
+
+  useEffect(() => {
+    if (file) {
+      setFileToUpload(file)
+    }
+  }, [file])
 
   const proofToDisplay = selectedProof?.proof || proof;
 
@@ -32,13 +40,18 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid}): ReactElement =
 
   const handleAccept = useCallback(async () => {
     try {
-      // TODO - Upload proof to IPFS
-      // TODO - Add IPFS CID to proof
-      setAccepted(true)
+      if (!fileToUpload) {
+        console.error('File is null when accepting');
+        return;
+      }
+      const uploadedFile = fileToUpload;
+      let ipfsCid = await dispatch(uploadFileToIpfs(uploadedFile));
+      dispatch(uploadFileSuccess(ipfsCid));
+      setAccepted(true);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }, []);
+  }, [dispatch, fileToUpload]);
 
   const inputValue = `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
 
