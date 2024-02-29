@@ -6,6 +6,7 @@ import Modal from '../Modal';
 import { copyText } from '../../utils';
 import { uploadFileSuccess, useSelectedProof } from '../../store/proofupload';
 import { uploadFileToIpfs } from '../../store/upload';
+
 interface ProofDetailsProps {
   proof: any;
   cid?: string;
@@ -14,12 +15,12 @@ interface ProofDetailsProps {
 
 const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactElement => {
   const dispatch = useDispatch();
+  const selectedProof = useSelectedProof();
 
   const [isOpen, setIsOpen] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
-  console.log(fileToUpload)
-  const selectedProof = useSelectedProof()
+
   const proofs = useSelector((state: any) => state.proofUpload.proofs);
 
   useEffect(() => {
@@ -28,7 +29,6 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
     }
   }, [file])
 
-  const proofToDisplay = selectedProof?.proof || proof;
 
   const closeModal = useCallback(() => {
     setIsOpen(false)
@@ -41,26 +41,28 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
   const handleAccept = useCallback(async () => {
     try {
       if (!fileToUpload) {
-        console.error('File is null when accepting');
+        console.error('No file to upload, state might be out of sync');
         return;
       }
       const uploadedFile = fileToUpload;
-      let ipfsCid = await dispatch(uploadFileToIpfs(uploadedFile));
-      dispatch(uploadFileSuccess(ipfsCid));
+      await dispatch(uploadFileToIpfs(uploadedFile));
       setAccepted(true);
     } catch (e) {
       console.error(e);
     }
-  }, [dispatch, fileToUpload]);
+  }, [fileToUpload]);
 
-  const inputValue = `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
 
   const handleCopyClick: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
     e.preventDefault();
     await copyText(inputValue);
   };
 
+  const proofToDisplay = selectedProof?.proof || proof;
+  const inputValue = `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
+
   // TODO - Format proof details for redacted data
+
   return (
     <div>
       {proofToDisplay && (

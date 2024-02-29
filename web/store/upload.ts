@@ -5,7 +5,7 @@ import { ActionType
  } from './proofupload';
 
 
-export const uploadFileToIpfs = (file: any) => {
+export const uploadFileToIpfs = (file: File) => {
   return async (dispatch: ThunkDispatch<AppRootState, ActionType, Action>) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -19,8 +19,7 @@ export const uploadFileToIpfs = (file: any) => {
         throw new Error('Failed to upload file to IPFS');
       }
       const data = await response.json();
-
-      dispatch(uploadFileSuccess(data));
+      dispatch(uploadFileSuccess(data))
       return data;
     } catch (error) {
       console.error('Error uploading file to IPFS:', error);

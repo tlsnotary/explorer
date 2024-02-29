@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { verify } from 'tlsn-js';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
+import { useNotaryKey } from '../../store/notaryKey';
 
 export default function SharedProof(): ReactElement {
   const { cid } = useParams();
@@ -11,7 +12,7 @@ export default function SharedProof(): ReactElement {
   const [verifiedProof, setVerifiedProof] = useState<Proof | null>(null);
   const [errors, setErrors] = useState<string | null>(null);
 
-  const notaryKey = useSelector((state: any) => state.notaryKey.key);
+  const notaryKey = useNotaryKey();
 
   useEffect(() => {
     async function fetchFile() {
