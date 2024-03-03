@@ -1,16 +1,15 @@
 import React, { FC, useEffect } from 'react';
-
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
   closeModal: () => void;
-  children: any;
+  children: React.ReactNode;
 }
 
+const modalRoot = document.getElementById('modal-root')!;
 
 const Modal: FC<ModalProps> = ({ isOpen, closeModal, children }) => {
-  if (!isOpen) return null;
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!isOpen) return;
@@ -35,15 +34,16 @@ const Modal: FC<ModalProps> = ({ isOpen, closeModal, children }) => {
     };
   }, [isOpen, closeModal]);
 
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="flex flex-col items-center justify-items-center content-center bg-white p-8 rounded-lg modal-content">
-        {children}
-      </div>
-    </div>
-  );
+  return isOpen
+    ? createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="flex flex-col items-center justify-items-center content-center bg-white p-8 rounded-lg modal-content">
+            {children}
+          </div>
+        </div>,
+        modalRoot
+      )
+    : <></>;
 };
-
-
+ 
 export default Modal;
