@@ -31,7 +31,7 @@ export default function NotaryKey(): ReactElement {
         .trim();
 
       try {
-        const decodedKeyContent = atob(keyContent);
+        atob(keyContent);
 
       } catch (err) {
         setError('Invalid Base64 encoding');

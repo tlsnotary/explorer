@@ -32,6 +32,7 @@ export default function FileDrop(): ReactElement {
     let verifiedProof: Proof;
     const proofContent = await readFileAsync(file);
     try {
+      console.log(notaryKey);
       verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
@@ -39,7 +40,7 @@ export default function FileDrop(): ReactElement {
       return;
     }
     dispatch(uploadFile(file.name, verifiedProof));
-}, [dispatch])
+}, [dispatch, notaryKey])
 
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
