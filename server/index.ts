@@ -6,7 +6,7 @@ import path from 'path';
 import { addBytes, getCID } from './services/ipfs';
 
 const app = express();
-const port = 3030;
+const port = 3000;
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
