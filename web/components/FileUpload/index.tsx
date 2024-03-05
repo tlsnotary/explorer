@@ -7,6 +7,7 @@ import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
 import { useNotaryKey } from '../../store/notaryKey';
+import Icon from '../Icon';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -70,7 +71,7 @@ return (
       onDrop={handleFileDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-     <i className="text-white fa-solid fa-upload text-6xl"></i>
+    <Icon className="text-white" fa="fa-solid fa-upload" size={6} />
      <br></br>
      <p className="font-bold font-medium text-white">Drop your "proof.json" file here or click to select</p>
      {error && <p className="text-red-500 font-bold">{error}</p>}

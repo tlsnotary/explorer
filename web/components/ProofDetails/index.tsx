@@ -2,10 +2,11 @@ import React, { ReactElement, useState, useCallback, useEffect } from 'react';
 import { formatStrings, formatTime, extractHTML } from '../../utils';
 import { useSelector, useDispatch } from 'react-redux';
 import ProofSelect from '../ProofSelect';
-import Modal from '../Modal';
+import Modal, { ModalContent, ModalHeader, ModalFooter } from '../Modal';
 import { copyText } from '../../utils';
-import { uploadFileSuccess, useSelectedProof } from '../../store/proofupload';
+import { useSelectedProof } from '../../store/proofupload';
 import { uploadFileToIpfs } from '../../store/upload';
+import Icon from '../Icon';
 
 interface ProofDetailsProps {
   proof: any;
@@ -72,20 +73,42 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
           <button onClick={openModal} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             Share
           </button>
-          <Modal isOpen={isOpen} closeModal={closeModal}>
-            <h1 className='text-2xl font-bold mb-4'>Share {selectedProof?.fileName}</h1>
+          {isOpen && (
+          <Modal
+          className="flex flex-col items-center justify-center w-11/12 md:w-3/4 lg:w-2/4 h-auto md:h-auto lg:h-auto bg-white rounded-lg p-4 gap-4"
+          onClose={closeModal}>
+            <ModalHeader onClose={closeModal}>
+              Share Proof
+            </ModalHeader>
+            <ModalContent className="flex flex-col items-center text-center gap-4">
             <p className='text-red-500 font-bold'>This will make your proof publicly accessible by anyone with the CID</p>
             {!accepted ? (
-            <button className='button' onClick={handleAccept}>
+              <button className="m-0 w-32 bg-red-200 text-red-500 hover:bg-red-200 hover:text-red-500 hover:font-bold" onClick={handleAccept}>
             I understand
             </button>
             ) : (
-            <div className='flex flex-col content-center items-center gap-3 w-11/12'>
-              <input readOnly value={inputValue} className="w-4/5 h-12 bg-gray-800 text-white rounded" />
-              <button className="border border-solid border-black w-10 h-10" onClick={handleCopyClick}><i className="fas fa-copy"></i></button>
-            </div>
+              <div className="relative w-11/12">
+                <input
+                  readOnly
+                  value={inputValue}
+                  className="w-full h-12 bg-gray-800 text-white rounded px-3 pr-10" // Added pr-10 for padding on the right
+                />
+                <button
+                  className="absolute top-0 right-0 w-10 h-12 bg-gray-700 text-white flex items-center justify-center hover:bg-gray-700 rounded-r focus:outline-none focus:ring focus:border-blue-500"
+                  onClick={handleCopyClick}
+                >
+                  <Icon className="fas fa-copy" size={1}/>
+                </button>
+              </div>
             )}
+            </ModalContent>
+            <ModalFooter>
+              <button className="m-0 w-24 bg-slate-600 text-slate-200 hover:bg-slate-500 hover:text-slate-100 hover:font-bold" onClick={closeModal}>
+                Close
+              </button>
+            </ModalFooter>
           </Modal>
+          )}
           </div>
           <span className="font-bold text-2xl">Server Domain:</span>
           <div className="flex items-center h-12 w-4/5 bg-gray-800 text-white rounded">{proofToDisplay.serverName}</div>

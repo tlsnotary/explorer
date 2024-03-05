@@ -1,49 +1,94 @@
-import React, { FC, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { MouseEventHandler, ReactElement, ReactNode } from 'react';
+import ReactDOM from 'react-dom';
+import './modal.scss';
+import Icon from '../Icon';
+import classNames from 'classnames';
 
-interface ModalProps {
-  isOpen: boolean;
-  closeModal: () => void;
-  children: React.ReactNode;
+type Props = {
+  className?: string;
+  onClose: MouseEventHandler;
+  children: ReactNode | ReactNode[];
+};
+
+export default function Modal(props: Props): ReactElement {
+  const { className, onClose, children } = props;
+
+  const modalRoot = document.querySelector('#modal-root');
+
+  if (!modalRoot) return <></>;
+
+  return ReactDOM.createPortal(
+    <div
+      className={classNames('bg-black bg-opacity-80', 'modal__overlay')}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose && onClose(e);
+      }}
+    >
+      <div
+        className={classNames(`modal__wrapper bg-white`, className)}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    modalRoot,
+  );
 }
 
-const modalRoot = document.getElementById('modal-root')!;
-
-const Modal: FC<ModalProps> = ({ isOpen, closeModal, children }) => {
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!isOpen) return;
-      const target = event.target as HTMLElement;
-      if (!target.closest('.modal-content')) {
-        closeModal();
-      }
-    };
-
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        closeModal();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscapeKey);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [isOpen, closeModal]);
-
-  return isOpen
-    ? createPortal(
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="flex flex-col items-center justify-items-center content-center bg-white p-8 rounded-lg modal-content">
-            {children}
-          </div>
-        </div>,
-        modalRoot
-      )
-    : <></>;
+type HeaderProps = {
+  onClose?: () => void;
+  children: ReactNode;
 };
- 
-export default Modal;
+
+export function ModalHeader(props: HeaderProps): ReactElement {
+  return (
+    <div className={classNames('border-b modal__header border-gray-100')}>
+      <div className="modal__header__title">{props.children}</div>
+      <div className="modal__header__content">
+        {props.onClose && (
+          <div
+            className={classNames(
+              'flex flex-row items-center justify-center',
+              'p-2 rounded-full opacity-50',
+              'hover:opacity-100 text-black',
+            )}
+          >
+            <Icon fa="fas fa-times" size={1} onClick={props.onClose} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type ContentProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export function ModalContent(props: ContentProps): ReactElement {
+  return (
+    <div className={classNames('modal__content', props.className)}>
+      {props.children}
+    </div>
+  );
+}
+
+type FooterProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export function ModalFooter(props: FooterProps): ReactElement {
+  return (
+    <div
+      className={classNames(
+        'border-t modal__footer border-gray-100',
+        props.className,
+      )}
+    >
+      {props.children}
+    </div>
+  );
+}
