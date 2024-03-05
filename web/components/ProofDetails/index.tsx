@@ -60,7 +60,7 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
   };
 
   const proofToDisplay = selectedProof?.proof || proof;
-  const inputValue = `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
+  const inputValue = process.env.NODE_ENV === "development" ? `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}` : `www.tlsnexplorer.com/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
 
   // TODO - Format proof details for redacted data
 
@@ -94,7 +94,7 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
                   className="w-full h-12 bg-gray-800 text-white rounded px-3 pr-10" // Added pr-10 for padding on the right
                 />
                 <button
-                  className="absolute top-0 right-0 w-10 h-12 bg-gray-700 text-white flex items-center justify-center hover:bg-gray-700 rounded-r focus:outline-none focus:ring focus:border-blue-500"
+                  className="absolute top-0 right-0 w-10 h-12 bg-gray-700 text-white flex items-center justify-center hover:bg-gray-500 rounded-r focus:outline-none focus:ring focus:border-blue-500"
                   onClick={handleCopyClick}
                 >
                   <Icon className="fas fa-copy" size={1}/>

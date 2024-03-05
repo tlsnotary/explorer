@@ -15,21 +15,16 @@ export default function NotaryKey(): ReactElement {
 
   const isValidPEMKey = (key: string): boolean => {
     try {
-
       const trimmedKey = key.trim();
-
-
       if (!trimmedKey.startsWith('-----BEGIN PUBLIC KEY-----') || !trimmedKey.endsWith('-----END PUBLIC KEY-----')) {
         setError('Invalid PEM format: header or footer missing');
         return false;
       }
-
-
       const keyContent = trimmedKey
         .replace('-----BEGIN PUBLIC KEY-----', '')
         .replace('-----END PUBLIC KEY-----', '')
         .trim();
-
+        
       try {
         atob(keyContent);
 
@@ -59,19 +54,30 @@ export default function NotaryKey(): ReactElement {
   }
 
   return (
-    <details className="w-3/4 m-auto">
+    <details className="w-3/4 mx-auto">
       <summary className="text-2xl font-bold cursor-pointer">
         Change Notary Public Key:
       </summary>
-      <textarea className="w-full h-40 rounded bg-gray-800 text-white resize-none" value={notaryKey} onChange={(e) => handleInput(e)}>
-      </textarea>
-      {errors && <p className="text-red-500">{errors}</p>}
-      <button className="button" onClick={(e) => handleInput(e, notaryPseKey)}>
-        notary.pse.dev
-      </button>
-      <button className="button" onClick={(e) => handleInput(e, defaultKey)}>
-        Default
-      </button>
+      <textarea
+        className="w-full h-40 rounded bg-gray-800 text-white resize-none mt-4 p-4"
+        value={notaryKey}
+        onChange={(e) => handleInput(e)}
+      />
+      {errors && <p className="text-red-500 mt-2">{errors}</p>}
+      <div className="flex mt-4">
+        <button
+          className="button"
+          onClick={(e) => handleInput(e, notaryPseKey)}
+        >
+          notary.pse.dev
+        </button>
+        <button
+          className="button"
+          onClick={(e) => handleInput(e, defaultKey)}
+        >
+          Default
+        </button>
+      </div>
     </details>
   )
 }
