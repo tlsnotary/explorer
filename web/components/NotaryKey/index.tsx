@@ -9,7 +9,7 @@ export default function NotaryKey(): ReactElement {
   const defaultKey: string = keys.defaultKey
   const notaryPseKey: string = keys.notaryPseKey
 
-  const [notaryKey, setNotaryKey] = useState<string>(defaultKey);
+  const [notaryKey, setNotaryKey] = useState<string>(notaryPseKey);
   const [errors, setError] = useState<string | null>(null);
 
 
@@ -24,7 +24,7 @@ export default function NotaryKey(): ReactElement {
         .replace('-----BEGIN PUBLIC KEY-----', '')
         .replace('-----END PUBLIC KEY-----', '')
         .trim();
-        
+
       try {
         atob(keyContent);
 
