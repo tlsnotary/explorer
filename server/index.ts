@@ -32,7 +32,7 @@ app.post('/api/upload', async (req, res) => {
     // @ts-ignore
     const data = file.data;
     const cid = await addBytes(data);
-    res.send(cid);
+    res.json(cid);
     return;
   }
 
@@ -42,6 +42,7 @@ app.post('/api/upload', async (req, res) => {
 app.get('/gateway/ipfs/:cid', async (req, res) => {
   const cid = req.params.cid;
   const file = await getCID(req.params.cid);
+  console.log(file);
   const readStream = new stream.PassThrough();
   readStream.end(Buffer.from(file));
   res.set('Content-Type', 'application/octet-stream');

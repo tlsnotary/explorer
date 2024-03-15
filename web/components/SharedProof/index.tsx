@@ -20,7 +20,7 @@ export default function SharedProof(): ReactElement {
         setErrors('No CID provided');
         return;
       }
-      const response = await fetch(`/ipfs/${cid}`);
+      const response = await fetch(`/gateway/ipfs/${cid}`);
       if (!response.ok) {
         setErrors('Failed to fetch file from IPFS');
         throw new Error('Failed to fetch file from IPFS');
@@ -28,6 +28,7 @@ export default function SharedProof(): ReactElement {
       const data = await response.json();
       try {
         const proof = await verify(data, notaryKey);
+        console.log(data);
         setVerifiedProof(proof);
 
       } catch (e) {

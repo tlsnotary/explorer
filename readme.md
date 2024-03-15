@@ -5,7 +5,9 @@ TLSN Explorer is server that will handle the social discovery and visualization 
 ## Set up .env
 1. `cp .env.sample .env`
 2. Create an API key in [Pinata.cloud](https://docs.pinata.cloud/quickstart/node-js#generate-your-api-keys)
-3. Update `PINATA_JWT` in your `.env` file
+3. Create a new Gateway in [Pinata.cloud](https://app.pinata.cloud/gateway)
+4. Create a new Gateway access token in [Pinata.cloud](https://app.pinata.cloud/developers/gateway-settings)
+5. Update your `.env` file
 
 ## Development
 ```bash
