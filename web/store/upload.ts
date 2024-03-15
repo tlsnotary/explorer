@@ -11,7 +11,7 @@ export const uploadFileToIpfs = (file: File) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       });

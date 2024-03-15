@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
@@ -26,23 +27,22 @@ app.use(fileUpload({
   limits: { fileSize: 1024 * 1024 }, // 1mb file limit
 }));
 
-
-
-app.post('/upload', async (req, res) => {
+app.post('/api/upload', async (req, res) => {
   for (const file of Object.values(req.files!)) {
     // @ts-ignore
     const data = file.data;
     const cid = await addBytes(data);
-    res.send(JSON.stringify(cid.toString()));
+    res.json(cid);
     return;
   }
 
   res.status(400).send({ error: true, message: 'request is missing file' });
 });
 
-app.get('/ipfs/:cid', async (req, res) => {
+app.get('/gateway/ipfs/:cid', async (req, res) => {
   const cid = req.params.cid;
   const file = await getCID(req.params.cid);
+  console.log(file);
   const readStream = new stream.PassThrough();
   readStream.end(Buffer.from(file));
   res.set('Content-Type', 'application/octet-stream');

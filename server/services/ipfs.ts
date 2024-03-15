@@ -1,27 +1,31 @@
-import { createHelia, HeliaLibp2p } from 'helia';
-import { unixfs } from '@helia/unixfs';
-import { CID } from 'multiformats/cid'
+import pinataSDK from '@pinata/sdk';
+import { Readable } from 'stream';
+const PINATA_API_KEY = process.env.PINATA_API_KEY;
+const PINATA_API_SECRET = process.env.PINATA_API_SECRET;
+const pinata = new pinataSDK(PINATA_API_KEY, PINATA_API_SECRET);
 
 
-let node: HeliaLibp2p | null = null;
+export async function addBytes(file: Buffer) {
+  const res = await pinata.pinFileToIPFS(Readable.from(file), {
+    pinataMetadata: {
+      name: 'proof.json',
+    },
+    pinataOptions: {
+      cidVersion: 1
+    }
+  });
 
-export async function getIPFS() {
-  if (!node)
-    node = await createHelia();
-
-  return node;
-}
-
-export async function addBytes(buf: Buffer) {
-  const ipfs = await getIPFS();
-  const fs = unixfs(ipfs);
-  const cid = await fs.addBytes(buf);
-  return cid;
+  if (res.IpfsHash) return res.IpfsHash;
+  return null;
 }
 
 export async function getCID(hash: string) {
-  const ipfs = await getIPFS();
-  const cid = CID.parse(hash);
-  const file = await ipfs.blockstore.get(cid);
-  return file;
+  console.log(process.env.PINATA_GATEWAY + '/' + hash);
+  const res = await fetch(process.env.PINATA_GATEWAY + '/ipfs/' + hash, {
+    headers: {
+      'x-pinata-gateway-token': process.env.PINATA_GATEWAY_KEY!,
+    }
+  });
+
+  return res.text();
 }
