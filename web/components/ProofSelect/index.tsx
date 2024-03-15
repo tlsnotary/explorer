@@ -1,6 +1,5 @@
 import React, { ReactElement } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { readFileAsync } from '../../utils';
 import { selectProof } from '../../store/proofupload';
 
 export default function ProofSelect(): ReactElement {

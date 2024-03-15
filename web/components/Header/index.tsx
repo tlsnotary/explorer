@@ -6,7 +6,7 @@ export default function Header(): ReactElement {
 
   return (
     <header className="flex flex-row items-center justify-between h-16 px-4 bg-gray-800 text-white">
-        <div className="text-xl font-bold">TLSN Explorer</div>
+        <a href="/" className="text-xl font-bold">TLSN Explorer</a>
       <div className="flex flex-row items-center gap-4">
         <a href="https://tlsnotary.org/"
          className="flex flex-row items-center justify-center w-40 h-10 rounded button"

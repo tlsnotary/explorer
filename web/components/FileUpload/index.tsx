@@ -1,20 +1,22 @@
 import React, { ReactElement, useCallback, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
 import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
 import type { Proof } from '../types/types';
+import { useNotaryKey } from '../../store/notaryKey';
+import Icon from '../Icon';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
+  const notaryKey = useNotaryKey();
+
 
   const [error, setError] = useState<string | null>(null);
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
-
-  const notaryKey = useSelector((state: any) => state.notaryKey.key);
-
+  const [file, setFile] = useState<File | null>(null);
 
   const handleFileUpload = useCallback(async (file: any): Promise<void> => {
     if (file.type !== 'application/json') {
@@ -26,6 +28,7 @@ export default function FileDrop(): ReactElement {
       setError('File size exceeds the maximum limit (1MB).');
       return;
     }
+    setFile(file);
     setError(null);
     let verifiedProof: Proof;
     const proofContent = await readFileAsync(file);
@@ -37,8 +40,7 @@ export default function FileDrop(): ReactElement {
       return;
     }
     dispatch(uploadFile(file.name, verifiedProof));
-
-}, [dispatch])
+}, [dispatch, notaryKey])
 
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -68,7 +70,7 @@ return (
       onDrop={handleFileDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-     <i className="text-white fa-solid fa-upload text-6xl"></i>
+    <Icon className="text-white" fa="fa-solid fa-upload" size={6} />
      <br></br>
      <p className="font-bold font-medium text-white">Drop your "proof.json" file here or click to select</p>
      {error && <p className="text-red-500 font-bold">{error}</p>}
@@ -84,7 +86,7 @@ return (
     <NotaryKey />
     <br></br>
     <br></br>
-    {!error && <ProofDetails proof={verifiedProof} /> }
+    {!error && <ProofDetails proof={verifiedProof} file={file} />}
   </div>
   )
 }
