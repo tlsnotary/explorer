@@ -18,9 +18,11 @@ export default function SharedProof(): ReactElement {
       setErrors('No IPFS CID found');
       return;
     }
-    console.log(notaryKey);
     dispatch(fetchProofFromIPFS(cid, notaryKey))
-      .catch(e => setErrors(e.message));
+      .catch(e => {
+        console.error(e);
+        setErrors(e.message);
+      });
   }, [cid, notaryKey]);
 
   return (

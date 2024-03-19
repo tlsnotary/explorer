@@ -55,7 +55,7 @@ const options = {
       },
       {
         test: /\.(ts|tsx)$/,
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!(tlsn-js)\/).*/,
         use: [
           {
             loader: require.resolve("ts-loader"),

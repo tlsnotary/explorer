@@ -13,7 +13,7 @@ export default function App(): ReactElement {
       <Header />
       <Routes>
         <Route path="/" element={<FileDrop />} />
-        <Route path="/:cid" element={<SharedProof />} />
+        <Route path="/ipfs/:cid" element={<SharedProof />} />
       </Routes>
     </div>
   );

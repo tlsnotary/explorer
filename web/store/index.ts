@@ -25,12 +25,16 @@ const createStoreWithMiddleware =
       thunk,
     )(createStore);
 
-function configureAppStore() {
+function configureAppStore(preloadedState?: AppRootState) {
+  const { proofUpload, notaryKey, proofs } = preloadedState || {};
   return createStoreWithMiddleware(
     rootReducer,
+    {
+      proofs,
+      proofUpload,
+      notaryKey,
+    },
   );
 }
 
-const store = configureAppStore();
-
-export default store;
+export default configureAppStore;

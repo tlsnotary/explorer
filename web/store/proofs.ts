@@ -35,13 +35,24 @@ const initState: State = {
   ipfs: {},
 };
 
-export const fetchProofFromIPFS = (cid: string, notaryKey = '') => async (dispatch: ThunkDispatch<AppRootState, ActionType, Action>) => {
-  const response = await fetch(`/gateway/ipfs/${cid}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch file from IPFS');
+export const fetchProofFromIPFS = (cid: string, notaryKey = '') => async (dispatch: ThunkDispatch<AppRootState, ActionType, Action>, getState: () => AppRootState) => {
+  const old = getState().proofs.ipfs[cid];
+
+  let data;
+
+  if (!old?.raw) {
+    const response = await fetch(`/gateway/ipfs/${cid}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch file from IPFS');
+    }
+
+    data = await response.json();
+  } else {
+    data = old.raw;
   }
-  const data = await response.json();
-  const { verify } = await import('tlsn-js');
+
+  const { verify } = await import('tlsn-js/src');
 
   const proof = await verify(data, notaryKey);
 

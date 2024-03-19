@@ -4,13 +4,13 @@ import fileUpload from 'express-fileupload';
 import stream from 'stream';
 import path from 'path';
 import { addBytes, getCID } from './services/ipfs';
-import store from '../web/store';
 import App from '../web/pages/App';
 import { Provider } from 'react-redux';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import * as fs from 'fs';
+import configureAppStore, { AppRootState } from '../web/store';
 
 const app = express();
 const port = 3000;
@@ -57,7 +57,9 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
   readStream.pipe(res);
 });
 
-app.get('/:cid', async (req, res) => {
+app.get('/ipfs/:cid', async (req, res) => {
+  const file = await getCID(req.params.cid);
+  const store = configureAppStore();
   const html = renderToString(
     <Provider store={store}>
       <StaticRouter location={req.url}>
@@ -66,7 +68,31 @@ app.get('/:cid', async (req, res) => {
     </Provider>
   );
 
-  res.send(indexHTML.replace('<div id="root"></div>', `<div id="root">${html}</div>`));
+  const preloadedState = store.getState();
+
+  // @ts-ignore
+  preloadedState.proofs.ipfs[req.params.cid] = {
+    raw: JSON.parse(file),
+  };
+
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Popup</title>
+      <script>
+        window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState)};
+      </script>
+      <script defer src="/index.bundle.js"></script>
+    </head>
+    <body>
+      <div id="root">${html}</div>
+      <div id="modal-root"></div>
+    </body>
+    </html>
+  `);
 })
 
 app.get('*', (req, res) => {
