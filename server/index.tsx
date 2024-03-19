@@ -9,15 +9,13 @@ import { Provider } from 'react-redux';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
-import * as fs from 'fs';
 import configureAppStore from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
+import htmlToImage from 'node-html-to-image';
 
 const app = express();
 const port = 3000;
-
-const indexHTML = fs.readFileSync(path.join(__dirname, '../ui', 'index.html'), 'utf-8');
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -61,7 +59,25 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 
 app.get('/ipfs/:cid', async (req, res) => {
   const file = await getCID(req.params.cid);
-  const store = configureAppStore();
+  const jsonProof = JSON.parse(file);
+  const proof = await verify(file, await fetchPublicKeyFromNotary(jsonProof.notaryUrl));
+  proof.notaryUrl = jsonProof.notaryUrl;
+
+  const store = configureAppStore({
+    notaryKey: { key: '' },
+    proofUpload: {
+      proofs: [],
+      selectedProof: null,
+    },
+    proofs: {
+      ipfs: {
+        [req.params.cid]: {
+          raw: jsonProof,
+          proof,
+        }
+      }
+    }
+  });
   const html = renderToString(
     <Provider store={store}>
       <StaticRouter location={req.url}>
@@ -70,24 +86,23 @@ app.get('/ipfs/:cid', async (req, res) => {
     </Provider>
   );
 
-  const jsonProof = JSON.parse(file);
-  const proof = await verify(file, await fetchPublicKeyFromNotary(jsonProof.notaryUrl));
+
   const preloadedState = store.getState();
 
-  proof.notaryUrl = jsonProof.notaryUrl;
+  const img = await htmlToImage({
+    html: html,
+  });
 
-  // @ts-ignore
-  preloadedState.proofs.ipfs[req.params.cid] = {
-    raw: jsonProof,
-    proof,
-  };
+  const imgUrl= 'data:image/png;base64,' + img.toString('base64');
 
+  console.log(imgUrl);
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta property="og:image" content="${imgUrl}" />
       <title>Popup</title>
       <script>
         window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState)};
