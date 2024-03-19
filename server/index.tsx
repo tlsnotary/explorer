@@ -10,7 +10,9 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import * as fs from 'fs';
-import configureAppStore, { AppRootState } from '../web/store';
+import configureAppStore from '../web/store';
+// @ts-ignore
+import { verify } from '../rs/verifier/index.node';
 
 const app = express();
 const port = 3000;
@@ -68,11 +70,16 @@ app.get('/ipfs/:cid', async (req, res) => {
     </Provider>
   );
 
+  const jsonProof = JSON.parse(file);
+  const proof = await verify(file, await fetchPublicKeyFromNotary(jsonProof.notaryUrl));
   const preloadedState = store.getState();
+
+  proof.notaryUrl = jsonProof.notaryUrl;
 
   // @ts-ignore
   preloadedState.proofs.ipfs[req.params.cid] = {
-    raw: JSON.parse(file),
+    raw: jsonProof,
+    proof,
   };
 
   res.send(`
@@ -102,3 +109,10 @@ app.get('*', (req, res) => {
 app.listen(port, () => {
   console.log(`explorer server listening on port ${port}`);
 });
+
+async function fetchPublicKeyFromNotary(notaryUrl: string) {
+  const res = await fetch(notaryUrl + '/info');
+  const json: any = await res.json();
+  if (!json.publicKey) throw new Error('invalid response');
+  return json.publicKey;
+}
