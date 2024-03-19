@@ -3,11 +3,19 @@ import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
 import path from 'path';
-
 import { addBytes, getCID } from './services/ipfs';
+import store from '../web/store';
+import App from '../web/pages/App';
+import { Provider } from 'react-redux';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom/server';
+import * as fs from 'fs';
 
 const app = express();
 const port = 3000;
+
+const indexHTML = fs.readFileSync(path.join(__dirname, '../ui', 'index.html'), 'utf-8');
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,13 +50,24 @@ app.post('/api/upload', async (req, res) => {
 app.get('/gateway/ipfs/:cid', async (req, res) => {
   const cid = req.params.cid;
   const file = await getCID(req.params.cid);
-  console.log(file);
   const readStream = new stream.PassThrough();
   readStream.end(Buffer.from(file));
   res.set('Content-Type', 'application/octet-stream');
   res.set('Content-Disposition', `attachment; filename=${cid}.json`);
   readStream.pipe(res);
 });
+
+app.get('/:cid', async (req, res) => {
+  const html = renderToString(
+    <Provider store={store}>
+      <StaticRouter location={req.url}>
+        <App />
+      </StaticRouter>
+    </Provider>
+  );
+
+  res.send(indexHTML.replace('<div id="root"></div>', `<div id="root">${html}</div>`));
+})
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../ui', 'index.html'));

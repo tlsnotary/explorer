@@ -13,10 +13,10 @@ const options = {
   target: "node",
   mode: process.env.NODE_ENV || "development",
   entry: {
-    index: path.join(__dirname, "server", "index.ts"),
+    index: path.join(__dirname, "server", "index.tsx"),
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss'],
   },
   output: {
     filename: "[name].bundle.js",
@@ -26,6 +26,29 @@ const options = {
   },
   module: {
     rules: [
+      {
+        // look for .css or .scss files
+        test: /\.(css|scss)$/,
+        // in the `web` directory
+        use: [
+          {
+            loader: "style-loader",
+          },
+          {
+            loader: "css-loader",
+            options: { importLoaders: 1 },
+          },
+          {
+            loader: "postcss-loader",
+          },
+          {
+            loader: "sass-loader",
+            options: {
+              sourceMap: true,
+            },
+          },
+        ],
+      },
       {
         test: /\.node$/,
         use: 'node-loader',
