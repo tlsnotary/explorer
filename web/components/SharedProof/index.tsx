@@ -27,7 +27,7 @@ export default function SharedProof(): ReactElement {
       }
       const data = await response.json();
       try {
-        let pubKey;
+        let pubKey: any;
         if (data.notaryUrl) {
           const notaryFetch = await fetch(data.notaryUrl + '/info');
           const notaryData = await notaryFetch.json();
