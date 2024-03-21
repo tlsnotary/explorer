@@ -27,8 +27,15 @@ export default function SharedProof(): ReactElement {
       }
       const data = await response.json();
       try {
-        const proof = await verify(data, notaryKey);
-        console.log(data);
+        let pubKey;
+        if (data.notaryUrl) {
+          const notaryFetch = await fetch(data.notaryUrl + '/info');
+          const notaryData = await notaryFetch.json();
+          pubKey = notaryData.publicKey;
+        }
+
+        const proof = await verify(data, pubKey || notaryKey);
+
         setVerifiedProof(proof);
 
       } catch (e) {
