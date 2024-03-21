@@ -33,7 +33,13 @@ export default function FileDrop(): ReactElement {
     let verifiedProof: Proof;
     const proofContent = await readFileAsync(file);
     try {
-      verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
+      let pubKey: any;
+      if (JSON.parse(proofContent).notaryUrl) {
+        const notaryFetch = await fetch(JSON.parse(proofContent).notaryUrl + '/info');
+        const notaryData = await notaryFetch.json();
+        pubKey = notaryData.publicKey;
+      }
+      verifiedProof = await verify(JSON.parse(proofContent), pubKey || notaryKey);
       setVerifiedProof(verifiedProof);
     } catch(e) {
       setError(e as string);

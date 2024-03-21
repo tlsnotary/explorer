@@ -25,7 +25,7 @@ type State = {
 }
 
 const initState: State = {
-  key: keys.defaultKey
+  key: keys.notaryPseKey
 }
 
 
