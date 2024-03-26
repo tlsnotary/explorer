@@ -13,7 +13,7 @@ type Props = {
 export default function Modal(props: Props): ReactElement {
   const { className, onClose, children } = props;
 
-  const modalRoot = document.querySelector('#modal-root');
+  const modalRoot = typeof document !== 'undefined' ? document.querySelector('#modal-root') : null;
 
   if (!modalRoot) return <></>;
 

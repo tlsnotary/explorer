@@ -1,7 +1,6 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { uploadFile } from '../../store/proofupload';
-import { verify } from 'tlsn-js'
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
@@ -32,6 +31,8 @@ export default function FileDrop(): ReactElement {
     setError(null);
     let verifiedProof: Proof;
     const proofContent = await readFileAsync(file);
+    const { verify } = await import('tlsn-js');
+
     try {
       verifiedProof = await verify(JSON.parse(proofContent), notaryKey);
       setVerifiedProof(verifiedProof);
