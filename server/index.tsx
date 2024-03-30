@@ -13,9 +13,10 @@ import configureAppStore from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
 import htmlToImage from 'node-html-to-image';
+import createPlugin from '@extism/extism';
 
 const app = express();
-const port = 3000;
+const port = 3030;
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -62,7 +63,6 @@ app.get('/ipfs/:cid', async (req, res) => {
   const jsonProof = JSON.parse(file);
   const proof = await verify(file, await fetchPublicKeyFromNotary(jsonProof.notaryUrl));
   proof.notaryUrl = jsonProof.notaryUrl;
-
   const store = configureAppStore({
     notaryKey: { key: '' },
     proofUpload: {
@@ -86,7 +86,7 @@ app.get('/ipfs/:cid', async (req, res) => {
     </Provider>
   );
 
-
+  console.log(html);
   const preloadedState = store.getState();
 
   const img = await htmlToImage({
@@ -94,7 +94,6 @@ app.get('/ipfs/:cid', async (req, res) => {
   });
 
   const imgUrl= 'data:image/png;base64,' + img.toString('base64');
-
   console.log(imgUrl);
   res.send(`
     <!DOCTYPE html>
@@ -123,6 +122,24 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   console.log(`explorer server listening on port ${port}`);
+});
+
+app.get('/:cid/host', async (req, res) => {
+  const file = await getCID(req.params.cid);
+  const jsonProof = JSON.parse(file);
+  // need to link to .wasm verifier
+  const wasm = { url: "verifier.wasm"};
+  const options = {
+    useWasi: true,
+    functions: {
+      // what functionality are the plugins providing?
+      env: {
+
+      }
+    }
+  }
+
+  const verifier = createPlugin(wasm, options);
 });
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
