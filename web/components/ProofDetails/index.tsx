@@ -22,7 +22,6 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
   const [accepted, setAccepted] = useState(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-
   const proofs = useSelector((state: any) => state.proofUpload.proofs);
 
   useEffect(() => {
@@ -102,6 +101,7 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
                   <Icon className="fas fa-copy" size={1}/>
                   </button>
                   </div>
+
               ) : (
                 <button className="m-0 w-32 bg-red-200 text-red-500 hover:bg-red-200 hover:text-red-500 hover:font-bold" onClick={handleAccept}>
                   I understand
