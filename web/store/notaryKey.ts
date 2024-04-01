@@ -3,14 +3,13 @@ import { useSelector } from 'react-redux';
 import keys from '../utils/keys.json';
 
 export enum ActionType {
-  SetKey = 'notaryKey/setKey'
+  SetKey = 'notaryKey/setKey',
 }
 
 export const setKey = (key: string) => ({
   type: ActionType.SetKey,
-  payload: key
-})
-
+  payload: key,
+});
 
 export type Action<payload = any> = {
   type: ActionType;
@@ -19,26 +18,24 @@ export type Action<payload = any> = {
   meta?: any;
 };
 
-
 type State = {
   key: string;
-}
+};
 
 const initState: State = {
-  key: keys.notaryPseKey
-}
-
+  key: keys.notaryPseKey,
+};
 
 function handleKey(state: State, action: Action): State {
   return {
     ...state,
-    key: action.payload
-  }
+    key: action.payload,
+  };
 }
 
 export const useNotaryKey = () => {
   return useSelector((state: AppRootState) => state.notaryKey.key);
-}
+};
 
 export default function notaryKey(state = initState, action: Action): State {
   switch (action.type) {

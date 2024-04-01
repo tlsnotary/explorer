@@ -1,5 +1,6 @@
 **/node_modules
 **/.DS_Store
+**/target
 .idea
 build
 .env
