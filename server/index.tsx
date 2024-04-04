@@ -13,7 +13,7 @@ import configureAppStore from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
 import htmlToImage from 'node-html-to-image';
-import createPlugin from '@extism/extism';
+import createPlugin, { CallContext } from '@extism/extism';
 
 const app = express();
 const port = 3030;
@@ -35,7 +35,7 @@ app.use(express.static('build/ui'));
 app.use(fileUpload({
   limits: { fileSize: 1024 * 1024 }, // 1mb file limit
 }));
-
+app.use(express.json());
 app.post('/api/upload', async (req, res) => {
   for (const file of Object.values(req.files!)) {
     // @ts-ignore
@@ -120,27 +120,37 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../ui', 'index.html'));
 });
 
+app.post('/callPlugin', async (req, res) => {
+  try {
+    const { func, input } = req.body;
+    const plugin = await createPlugin(
+      'http://localhost:3000/hello/hello.wasm',
+      {
+        useWasi: true,
+        functions: {
+          'extism:host/user': {
+            testing1: (context: CallContext, off: bigint) => {
+              console.log(off);
+              const input = context.read(off)?.text();
+              console.log(input);
+            }
+        }
+        }
+      }
+    )
+    const output = await plugin.call(func, input);
+    console.log(output!.text());
+    res.status(200).send(output!.text());
+  } catch (e) {
+    console.error(e);
+    res.status(500).send('error');
+  }
+});
+
 app.listen(port, () => {
   console.log(`explorer server listening on port ${port}`);
 });
 
-app.get('/:cid/host', async (req, res) => {
-  const file = await getCID(req.params.cid);
-  const jsonProof = JSON.parse(file);
-  // need to link to .wasm verifier
-  const wasm = { url: "verifier.wasm"};
-  const options = {
-    useWasi: true,
-    functions: {
-      // what functionality are the plugins providing?
-      env: {
-
-      }
-    }
-  }
-
-  const verifier = createPlugin(wasm, options);
-});
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
   const res = await fetch(notaryUrl + '/info');
