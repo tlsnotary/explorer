@@ -93,6 +93,7 @@ var options = {
                 ),
               }),
               transpileOnly: isDevelopment,
+              allowTsInNodeModules: true,
             },
           },
         ],
@@ -160,6 +161,7 @@ var options = {
       'Cross-Origin-Opener-Policy': 'same-origin',
     }
   },
+
 };
 
 if (process.env.NODE_ENV === "development") {
