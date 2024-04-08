@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import fileUpload from 'express-fileupload';
 import stream from 'stream';
 import path from 'path';
 import { addBytes, getCID } from './services/ipfs';
@@ -14,6 +13,7 @@ import configureAppStore from '../web/store';
 import { verify } from '../rs/verifier/index.node';
 import htmlToImage from 'node-html-to-image';
 import createPlugin, { CallContext } from '@extism/extism';
+import multer  from 'multer';
 
 const app = express();
 const port = 3030;
@@ -31,10 +31,10 @@ app.use((req, res, next) => {
     next()
   }
 });
+
+const upload = multer({dest: 'uploads/'});
 app.use(express.static('build/ui'));
-app.use(fileUpload({
-  limits: { fileSize: 1024 * 1024 }, // 1mb file limit
-}));
+
 app.use(express.json());
 app.post('/api/upload', async (req, res) => {
   for (const file of Object.values(req.files!)) {
@@ -120,11 +120,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../ui', 'index.html'));
 });
 
-app.post('/callPlugin', async (req, res) => {
+app.post('/callPlugin', upload.single('wasmFile'), async (req, res) => {
   try {
+    const wasmFile = req.file;
     const { func, input } = req.body;
     const plugin = await createPlugin(
-      'http://localhost:3000/hello/hello.wasm',
+      wasmFile!.path,
       {
         useWasi: true,
         functions: {
@@ -140,7 +141,7 @@ app.post('/callPlugin', async (req, res) => {
     )
     const output = await plugin.call(func, input);
     console.log(output!.text());
-    res.status(200).send(output!.text());
+    res.status(200).send(JSON.stringify(output!.text()));
   } catch (e) {
     console.error(e);
     res.status(500).send('error');
