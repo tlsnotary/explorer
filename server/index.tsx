@@ -15,9 +15,15 @@ import { verify } from '../rs/verifier/index.node';
 import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
 import { convertNotaryWsToHttp } from '../web/utils';
+import { IncomingMessage } from 'node:http';
+import { createServer } from 'http';
+import { WebSocketServer, type RawData, type WebSocket } from 'ws';
+import crypto from 'crypto';
 
 const app = express();
 const port = 3000;
+const server = createServer(app);
+const wss = new WebSocketServer({ server });
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -221,8 +227,127 @@ app.get('*', (req, res) => {
   `);
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`explorer server listening on port ${port}`);
+});
+
+const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
+const pairs: Map<string, string> = new Map<string, string>();
+
+wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
+  // you have a new client
+  console.log('New Connection');
+  // add this client to the clients array
+
+  let id = 0;
+  const clientId = crypto.randomUUID();
+  clients.set(clientId, client);
+
+  client.send(
+    Buffer.from(
+      JSON.stringify({
+        method: 'client_connect',
+        params: { clientId, id: id++ },
+      }),
+    ),
+  );
+
+  // set up client event listeners:
+  client.on('message', onClientMessage);
+  client.on('close', endClient);
+
+  function endClient() {
+    clients.delete(clientId);
+    console.log('connection closed');
+  }
+
+  function onClientMessage(rawData: RawData) {
+    try {
+      const msg = safeParseJSON(rawData.toString());
+
+      if (!msg) {
+        const pairedClientId = pairs.get(clientId);
+
+        if (pairedClientId) {
+          const target = clients.get(pairedClientId);
+          target!.send(rawData);
+        }
+
+        return;
+      }
+
+      switch (msg.method) {
+        case 'chat': {
+          const { from, to, text, id } = msg.params;
+          const target = clients.get(to);
+          if (target) {
+            target.send(rawData);
+          } else {
+            client.send(
+              Buffer.from(
+                JSON.stringify({
+                  id,
+                  error: {
+                    message: `client "${to}" does not exist`,
+                  },
+                }),
+              ),
+            );
+          }
+          break;
+        }
+        case 'pair_request': {
+          const { verifier, id } = msg.params;
+          const target = clients.get(verifier);
+          if (target) {
+            pairs.set(clientId, verifier);
+            target.send(rawData);
+          } else {
+            client.send(
+              Buffer.from(
+                JSON.stringify({
+                  id,
+                  error: {
+                    message: `client "${verifier}" does not exist`,
+                  },
+                }),
+              ),
+            );
+          }
+          break;
+        }
+        case 'pair_request_success': {
+          const { prover, id } = msg.params;
+          const target = clients.get(prover);
+          if (target) {
+            pairs.set(clientId, prover);
+            target.send(rawData);
+          } else {
+            client.send(
+              Buffer.from(
+                JSON.stringify({
+                  id,
+                  error: {
+                    message: `client "${prover}" does not exist`,
+                  },
+                }),
+              ),
+            );
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // This function broadcasts messages to all webSocket clients
+  function broadcast(data: string) {
+    clients.forEach((c) => c.send(data));
+  }
 });
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
@@ -230,4 +355,12 @@ async function fetchPublicKeyFromNotary(notaryUrl: string) {
   const json: any = await res.json();
   if (!json.publicKey) throw new Error('invalid response');
   return json.publicKey;
+}
+
+function safeParseJSON(data: string) {
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return null;
+  }
 }
