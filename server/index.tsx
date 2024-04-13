@@ -17,6 +17,7 @@ import { IncomingMessage } from 'node:http';
 import {createServer} from "http";
 import {WebSocketServer, type RawData, type WebSocket} from "ws";
 import crypto from "crypto";
+import qs from 'qs';
 
 
 const app = express();
@@ -140,9 +141,10 @@ wss.on("connection", (client: WebSocket, request: IncomingMessage) => {
   // add this client to the clients array
 
   let id = 0;
-  const clientId = crypto.randomUUID();
+  const query = qs.parse((request.url || '').replace(/\/\?/g, ''))
+  const clientId = (query?.clientId as string) || crypto.randomUUID();
   clients.set(clientId, client);
-  console.log(`New Connection - ${clientId}`);
+  console.log(`New Connection - ${clientId}`, );
 
   client.send(Buffer.from(JSON.stringify({
     method: 'client_connect',
