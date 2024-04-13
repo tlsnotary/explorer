@@ -242,6 +242,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   let id = 0;
   const clientId = crypto.randomUUID();
   clients.set(clientId, client);
+  console.log(`New Connection - ${clientId}`);
 
   client.send(
     Buffer.from(
@@ -258,7 +259,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
 
   function endClient() {
     clients.delete(clientId);
-    console.log('connection closed');
+    console.log(`Connection closed - ${clientId}`);
   }
 
   function onClientMessage(rawData: RawData) {
@@ -276,6 +277,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         return;
       }
 
+      console.log('new message: ', msg);
       switch (msg.method) {
         case 'chat': {
           const { from, to, text, id } = msg.params;
@@ -297,10 +299,10 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
           break;
         }
         case 'pair_request': {
-          const { verifier, id } = msg.params;
-          const target = clients.get(verifier);
+          const { to, id } = msg.params;
+          const target = clients.get(to);
           if (target) {
-            pairs.set(clientId, verifier);
+            pairs.set(clientId, to);
             target.send(rawData);
           } else {
             client.send(
@@ -308,7 +310,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
                 JSON.stringify({
                   id,
                   error: {
-                    message: `client "${verifier}" does not exist`,
+                    message: `client "${to}" does not exist`,
                   },
                 }),
               ),
@@ -317,10 +319,10 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
           break;
         }
         case 'pair_request_success': {
-          const { prover, id } = msg.params;
-          const target = clients.get(prover);
+          const { to, id } = msg.params;
+          const target = clients.get(to);
           if (target) {
-            pairs.set(clientId, prover);
+            pairs.set(clientId, to);
             target.send(rawData);
           } else {
             client.send(
@@ -328,7 +330,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
                 JSON.stringify({
                   id,
                   error: {
-                    message: `client "${prover}" does not exist`,
+                    message: `client "${to}" does not exist`,
                   },
                 }),
               ),
