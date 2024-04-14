@@ -270,11 +270,15 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     try {
       const msg = safeParseJSON(rawData.toString());
 
+      console.log('got msg: ', msg);
+
       if (!msg) {
-        const pairedClientId = pairs.get(clientId);
+        const [cid] = clientId.split(':');
+        const pairedClientId = pairs.get(cid);
 
         if (pairedClientId) {
-          const target = clients.get(pairedClientId);
+          const target = clients.get(pairedClientId + ':proof');
+          console.log('p2p: ', rawData.length);
           target!.send(rawData);
         }
 
