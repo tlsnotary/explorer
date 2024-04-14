@@ -234,6 +234,8 @@ server.listen(port, () => {
 
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const pairs: Map<string, string> = new Map<string, string>();
+pairs.set('alice', 'bob');
+pairs.set('bob', 'alice');
 
 wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   // you have a new client
@@ -279,7 +281,6 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         return;
       }
 
-      console.log('new message: ', msg);
       switch (msg.method) {
         case 'chat': {
           const { from, to, text, id } = msg.params;
@@ -297,6 +298,21 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
                 }),
               ),
             );
+          }
+          break;
+        }
+        case 'request_proof': {
+          const { from, to, plugin, id } = msg.params;
+          const target = clients.get(to);
+          if (target) {
+            target.send(rawData);
+          } else {
+            client.send(Buffer.from(JSON.stringify({
+              id,
+              error: {
+                message: `client "${to}" does not exist`,
+              }
+            })))
           }
           break;
         }
