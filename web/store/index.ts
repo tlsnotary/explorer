@@ -3,10 +3,12 @@ import thunk from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import proofUpload from './proofupload';
 import notaryKey from './notaryKey';
+import proofs from './proofs';
 
 const rootReducer = combineReducers({
   proofUpload,
-  notaryKey
+  notaryKey,
+  proofs,
 });
 
 export type AppRootState = ReturnType<typeof rootReducer>;
@@ -23,12 +25,16 @@ const createStoreWithMiddleware =
       thunk,
     )(createStore);
 
-function configureAppStore() {
+function configureAppStore(preloadedState?: AppRootState) {
+  const { proofUpload, notaryKey, proofs } = preloadedState || {};
   return createStoreWithMiddleware(
     rootReducer,
+    {
+      proofs,
+      proofUpload,
+      notaryKey,
+    },
   );
 }
 
-const store = configureAppStore();
-
-export default store;
+export default configureAppStore;

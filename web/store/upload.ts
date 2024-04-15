@@ -1,8 +1,7 @@
 import { ThunkDispatch } from 'redux-thunk';
 import { Action, uploadFileSuccess } from './proofupload';
 import { AppRootState } from './index';
-import { ActionType
- } from './proofupload';
+import { ActionType } from './proofupload';
 
 
 export const uploadFileToIpfs = (file: File) => {
