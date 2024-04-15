@@ -26,11 +26,10 @@
   },
   "ignorePatterns": [
     "node_modules",
-    "zip",
     "build",
-    "wasm",
-    "tlsn",
-    "util",
-    "webpack.config.js"
+    "rs",
+    "webpack.web.config.js",
+    "webpack.server.config.js",
+    "static"
   ]
 }

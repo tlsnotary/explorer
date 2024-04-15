@@ -19,7 +19,7 @@ delete window.__PRELOADED_STATE__;
         <App />
       </BrowserRouter>
     </Provider>,
-    document.getElementById('root')
+    document.getElementById('root'),
   );
 })();
 

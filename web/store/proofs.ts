@@ -22,45 +22,50 @@ type ProofData = {
     sent: string;
     recv: string;
     notaryUrl: string;
-  }
-}
+  };
+};
 
 type State = {
   ipfs: {
-    [cid: string]: ProofData
-  }
-}
+    [cid: string]: ProofData;
+  };
+};
 
 const initState: State = {
   ipfs: {},
 };
 
-export const fetchProofFromIPFS = (cid: string, notaryKey = '') => async (dispatch: ThunkDispatch<AppRootState, ActionType, Action>, getState: () => AppRootState) => {
-  const old = getState().proofs.ipfs[cid];
+export const fetchProofFromIPFS =
+  (cid: string, notaryKey = '') =>
+  async (
+    dispatch: ThunkDispatch<AppRootState, ActionType, Action>,
+    getState: () => AppRootState,
+  ) => {
+    const old = getState().proofs.ipfs[cid];
 
-  let data;
+    let data;
 
-  if (!old?.raw) {
-    const response = await fetch(`/gateway/ipfs/${cid}`);
+    if (!old?.raw) {
+      const response = await fetch(`/gateway/ipfs/${cid}`);
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch file from IPFS');
+      if (!response.ok) {
+        throw new Error('Failed to fetch file from IPFS');
+      }
+
+      data = await response.json();
+    } else {
+      data = old.raw;
     }
 
-    data = await response.json();
-  } else {
-    data = old.raw;
-  }
+    const { verify } = await import('tlsn-js/src');
 
-  const { verify } = await import('tlsn-js/src');
+    const proof = await verify(data, notaryKey);
 
-  const proof = await verify(data, notaryKey);
-
-  dispatch({
-    type: ActionType.SetIPFSProof,
-    payload: { cid, proof, raw: data },
-  });
-}
+    dispatch({
+      type: ActionType.SetIPFSProof,
+      payload: { cid, proof, raw: data },
+    });
+  };
 
 export default function proofs(
   state = initState,
@@ -73,7 +78,7 @@ export default function proofs(
       recv: string;
       notaryUrl: string;
     };
-  }>
+  }>,
 ): State {
   switch (action.type) {
     case ActionType.SetIPFSProof:
@@ -85,8 +90,8 @@ export default function proofs(
             proof: action.payload.proof,
             raw: action.payload.raw,
           },
-        }
-      }
+        },
+      };
     default:
       return state;
   }
@@ -97,4 +102,4 @@ export const useIPFSProof = (cid?: string): ProofData | null => {
     if (!cid) return null;
     return state.proofs.ipfs[cid] || null;
   }, deepEqual);
-}
+};

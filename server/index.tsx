@@ -19,21 +19,29 @@ const port = 3000;
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization',
+  );
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+  );
   res.setHeader('Cross-origin-Embedder-Policy', 'require-corp');
-  res.setHeader('Cross-origin-Opener-Policy','same-origin');
+  res.setHeader('Cross-origin-Opener-Policy', 'same-origin');
 
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200)
+    res.sendStatus(200);
   } else {
-    next()
+    next();
   }
 });
 app.use(express.static('build/ui'));
-app.use(fileUpload({
-  limits: { fileSize: 1024 * 1024 }, // 1mb file limit
-}));
+app.use(
+  fileUpload({
+    limits: { fileSize: 1024 * 1024 }, // 1mb file limit
+  }),
+);
 
 app.post('/api/upload', async (req, res) => {
   for (const file of Object.values(req.files!)) {
@@ -60,7 +68,10 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 app.get('/ipfs/:cid', async (req, res) => {
   const file = await getCID(req.params.cid);
   const jsonProof = JSON.parse(file);
-  const proof = await verify(file, await fetchPublicKeyFromNotary(jsonProof.notaryUrl));
+  const proof = await verify(
+    file,
+    await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
+  );
   proof.notaryUrl = jsonProof.notaryUrl;
 
   const store = configureAppStore({
@@ -74,18 +85,17 @@ app.get('/ipfs/:cid', async (req, res) => {
         [req.params.cid]: {
           raw: jsonProof,
           proof,
-        }
-      }
-    }
+        },
+      },
+    },
   });
   const html = renderToString(
     <Provider store={store}>
       <StaticRouter location={req.url}>
         <App />
       </StaticRouter>
-    </Provider>
+    </Provider>,
   );
-
 
   const preloadedState = store.getState();
 
@@ -93,7 +103,7 @@ app.get('/ipfs/:cid', async (req, res) => {
     html: html,
   });
 
-  const imgUrl= 'data:image/png;base64,' + img.toString('base64');
+  const imgUrl = 'data:image/png;base64,' + img.toString('base64');
 
   console.log(imgUrl);
   res.send(`
@@ -115,7 +125,7 @@ app.get('/ipfs/:cid', async (req, res) => {
     </body>
     </html>
   `);
-})
+});
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../ui', 'index.html'));
