@@ -30,12 +30,17 @@ export default function Button(props: Props): ReactElement {
           'button--secondary': btnType === 'secondary',
           'cursor-default': disabled || loading,
         },
-        className
+        className,
       )}
       onClick={!disabled && !loading ? onClick : undefined}
       disabled={disabled || loading}
-      {...btnProps}>
-      {loading ? <Icon className="animate-spin" fa="fa-solid fa-spinner" size={2} /> : children}
+      {...btnProps}
+    >
+      {loading ? (
+        <Icon className="animate-spin" fa="fa-solid fa-spinner" size={2} />
+      ) : (
+        children
+      )}
     </button>
   );
 }

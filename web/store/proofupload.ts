@@ -1,8 +1,6 @@
 import { AppRootState } from '.';
-import type { Proof } from '../components/types/types'
+import type { Proof } from '../utils/types/types';
 import { useSelector } from 'react-redux';
-
-
 
 export enum ActionType {
   AddFile = 'proofupload/addFile',
@@ -12,18 +10,18 @@ export enum ActionType {
 
 export const uploadFile = (fileName: string, proof: Proof) => ({
   type: ActionType.AddFile,
-  payload: { fileName, proof }
-})
+  payload: { fileName, proof },
+});
 
 export const selectProof = (proof: string) => ({
   type: ActionType.SelectProof,
-  payload: proof
-})
+  payload: proof,
+});
 
 export const uploadFileSuccess = (cid: string) => ({
   type: ActionType.UploadFileSuccess,
-  payload: cid
-})
+  payload: cid,
+});
 
 export type Action<payload = any> = {
   type: ActionType;
@@ -33,27 +31,27 @@ export type Action<payload = any> = {
 };
 
 type State = {
-  proofs: { fileName: string, proof: Proof }[];
-  selectedProof?: { fileName: string, proof: Proof, ipfsCID?: string } | null;
-}
+  proofs: { fileName: string; proof: Proof }[];
+  selectedProof?: { fileName: string; proof: Proof; ipfsCID?: string } | null;
+};
 
 const initState: State = {
-  proofs: []
-}
+  proofs: [],
+};
 
 function handleFile(state: State, action: Action): State {
   return {
     ...state,
     proofs: [...state.proofs, action.payload],
-    selectedProof: action.payload
-  }
+    selectedProof: action.payload,
+  };
 }
 
 function handleProofSelect(state: State, action: Action): State {
   return {
     ...state,
-    selectedProof: action.payload
-  }
+    selectedProof: action.payload,
+  };
 }
 
 function handleProofUpload(state: State, action: Action): State {
@@ -62,14 +60,14 @@ function handleProofUpload(state: State, action: Action): State {
     // @ts-ignore
     selectedProof: {
       ...state.selectedProof,
-      ipfsCID: action.payload
-    }
-  }
+      ipfsCID: action.payload,
+    },
+  };
 }
 
 export const useSelectedProof = () => {
   return useSelector((state: AppRootState) => state.proofUpload.selectedProof);
-}
+};
 
 export default function proofUpload(state = initState, action: Action): State {
   switch (action.type) {

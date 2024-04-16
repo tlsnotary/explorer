@@ -13,7 +13,9 @@
     "dev:server": "NODE_ENV=development concurrently npm:watch:server npm:nodemon:server",
     "start": "node build/server/index.bundle.js",
     "build": "concurrently npm:build:ui npm:build:server",
-    "dev": "concurrently npm:watch:ui npm:dev:server"
+    "dev": "concurrently npm:watch:ui npm:dev:server",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
@@ -32,6 +34,7 @@
     "buffer": "^6.0.3",
     "charwise": "^3.0.1",
     "classnames": "^2.3.2",
+    "copy-to-clipboard": "^3.3.3",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.3",
@@ -87,6 +90,7 @@
     "fs-extra": "^11.1.0",
     "html-loader": "^4.2.0",
     "html-webpack-plugin": "^5.5.0",
+    "image-webpack-loader": "^8.1.0",
     "node-loader": "^2.0.0",
     "nodemon": "^3.0.3",
     "postcss-loader": "^7.3.3",

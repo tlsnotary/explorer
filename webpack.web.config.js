@@ -66,15 +66,15 @@ var options = {
           },
         ],
       },
-      {
-        test: new RegExp(".(" + fileExtensions.join("|") + ")$"),
-        type: "asset/resource",
-        exclude: /node_modules/,
-        // loader: 'file-loader',
-        // options: {
-        //   name: '[name].[ext]',
-        // },
-      },
+      // {
+      //   test: new RegExp(".(" + fileExtensions.join("|") + ")$"),
+      //   type: "asset/resource",
+      //   exclude: /node_modules/,
+      //   // loader: 'file-loader',
+      //   // options: {
+      //   //   name: '[name].[ext]',
+      //   // },
+      // },
       {
         test: /\.html$/,
         loader: "html-loader",
@@ -115,13 +115,27 @@ var options = {
         ],
         exclude: /node_modules/,
       },
+      {
+        test: /\.(gif|png|jpe?g|svg)$/i,
+        use: [
+          'file-loader',
+          {
+            loader: 'image-webpack-loader',
+            options: {
+              publicPath: 'assets',
+              bypassOnDebug: true, // webpack@1.x
+              disable: true, // webpack@2.x and newer
+            },
+          },
+        ],
+      },
     ],
   },
   resolve: {
     alias: alias,
     extensions: fileExtensions
       .map((extension) => "." + extension)
-      .concat([".js", ".jsx", ".ts", ".tsx", ".css"]),
+      .concat([".js", ".jsx", ".ts", ".tsx", ".css", ".png", ".svg"]),
   },
   plugins: [
     isDevelopment && new ReactRefreshWebpackPlugin(),
@@ -133,6 +147,11 @@ var options = {
       patterns: [
         {
           from: "node_modules/tlsn-js/build",
+          to: path.join(__dirname, "build", "ui"),
+          force: true,
+        },
+        {
+          from: "static/favicon.png",
           to: path.join(__dirname, "build", "ui"),
           force: true,
         },

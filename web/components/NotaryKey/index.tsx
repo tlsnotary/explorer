@@ -6,17 +6,19 @@ import keys from '../../utils/keys.json';
 export default function NotaryKey(): ReactElement {
   const dispatch = useDispatch();
 
-  const defaultKey: string = keys.defaultKey
-  const notaryPseKey: string = keys.notaryPseKey
+  const defaultKey: string = keys.defaultKey;
+  const notaryPseKey: string = keys.notaryPseKey;
 
   const [notaryKey, setNotaryKey] = useState<string>(notaryPseKey);
   const [errors, setError] = useState<string | null>(null);
 
-
   const isValidPEMKey = (key: string): boolean => {
     try {
       const trimmedKey = key.trim();
-      if (!trimmedKey.startsWith('-----BEGIN PUBLIC KEY-----') || !trimmedKey.endsWith('-----END PUBLIC KEY-----')) {
+      if (
+        !trimmedKey.startsWith('-----BEGIN PUBLIC KEY-----') ||
+        !trimmedKey.endsWith('-----END PUBLIC KEY-----')
+      ) {
         setError('Invalid PEM format: header or footer missing');
         return false;
       }
@@ -27,7 +29,6 @@ export default function NotaryKey(): ReactElement {
 
       try {
         atob(keyContent);
-
       } catch (err) {
         setError('Invalid Base64 encoding');
         return false;
@@ -35,23 +36,31 @@ export default function NotaryKey(): ReactElement {
 
       return true;
     } catch (err) {
-
       console.error('Error validating key:', err);
       return false;
     }
   };
 
-
-  const handleInput = (e: FormEvent<HTMLTextAreaElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>, key?: string | undefined) => {
+  const handleInput = (
+    e:
+      | FormEvent<HTMLTextAreaElement>
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    key?: string | undefined,
+  ) => {
     setError(null);
-    const keyInput = key !== undefined ? key : (e.currentTarget instanceof HTMLTextAreaElement ? e.currentTarget.value : '');
+    const keyInput =
+      key !== undefined
+        ? key
+        : e.currentTarget instanceof HTMLTextAreaElement
+          ? e.currentTarget.value
+          : '';
     if (isValidPEMKey(keyInput)) {
       setNotaryKey(keyInput);
       dispatch(setKey(keyInput));
     } else {
       setNotaryKey(keyInput);
     }
-  }
+  };
 
   return (
     <details className="w-3/4 mx-auto">
@@ -71,13 +80,10 @@ export default function NotaryKey(): ReactElement {
         >
           notary.pse.dev
         </button>
-        <button
-          className="button"
-          onClick={(e) => handleInput(e, defaultKey)}
-        >
+        <button className="button" onClick={(e) => handleInput(e, defaultKey)}>
           Default
         </button>
       </div>
     </details>
-  )
+  );
 }

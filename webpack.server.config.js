@@ -16,7 +16,7 @@ const options = {
     index: path.join(__dirname, "server", "index.tsx"),
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.png', '.svg'],
   },
   output: {
     filename: "[name].bundle.js",
@@ -26,6 +26,20 @@ const options = {
   },
   module: {
     rules: [
+      {
+        test: /\.(gif|png|jpe?g|svg)$/i,
+        use: [
+          'file-loader',
+          {
+            loader: 'image-webpack-loader',
+            options: {
+              publicPath: 'assets',
+              bypassOnDebug: true, // webpack@1.x
+              disable: true, // webpack@2.x and newer
+            },
+          },
+        ],
+      },
       {
         // look for .css or .scss files
         test: /\.(css|scss)$/,

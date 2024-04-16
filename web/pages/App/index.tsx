@@ -1,13 +1,11 @@
 import React, { ReactElement } from 'react';
-import './index.scss';
-import Header from '../../components/Header';
 import { Routes, Route } from 'react-router-dom';
-import FileDrop from '../../components/FileUpload';
+import Header from '../../components/Header';
 import SharedProof from '../../components/SharedProof';
+import FileDrop from '../FileDrop';
+import './index.scss';
 
 export default function App(): ReactElement {
-
-
   return (
     <div className="app flex flex-col gap-4">
       <Header />
