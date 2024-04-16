@@ -1,11 +1,11 @@
-import React, { ChangeEvent, ReactElement, useCallback, useState } from 'react';
+import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { readFileAsync, safeParseJSON } from '../../utils';
 import FileUploadInput from '../../components/FileUploadInput';
-import classNames from 'classnames';
 import ProofViewer from '../../components/ProofViewer';
-import { Proof as VerifiedProof } from '../../components/types/types';
-import Icon from '../../components/Icon';
+import { Proof as VerifiedProof } from '../../utils/types/types';
+import { FileDropdown } from '../../components/FileDropdown';
+import { PubkeyInput } from '../PubkeyInput';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -33,7 +33,6 @@ export default function FileDrop(): ReactElement {
       }
 
       setStep('result');
-      // dispatch(uploadFile(file.name, verifiedProof));
     },
     [pubkey],
   );
@@ -68,7 +67,10 @@ export default function FileDrop(): ReactElement {
         return;
       }
 
-      onVerify(json).then(() => setFile(file));
+      try {
+        await onVerify(json);
+        setFile(file);
+      } catch (e) {}
     },
     [dispatch, onVerify],
   );
@@ -103,27 +105,18 @@ export default function FileDrop(): ReactElement {
   return (
     <div className="flex flex-col items-center w-full h-screen m-auto gap-2">
       {!!file && (
-        <div className="flex flew-row bg-yellow-100 border border-yellow-200 text-yellow-700 gap-2 p-2 rounded max-w-60">
-          <Icon
-            className="text-yellow-500 flex-shrink-0"
-            fa="fa-solid fa-file"
-          />
-          <div className="select-none flex-grow flex-shrink text-ellipsis overflow-hidden">
-            {file.name}
-          </div>
-          <Icon
-            fa="fa-solid fa-close flex-shrink-0"
-            className="text-red-300 hover:text-red-500"
-            onClick={() => {
-              setFile(null);
-              setError('');
-              setPubkey('');
-              setVerifiedProof(null);
-              setRawJson(null);
-              setStep('upload');
-            }}
-          />
-        </div>
+        <FileDropdown
+          files={[file]}
+          onChange={() => null}
+          onDelete={() => {
+            setFile(null);
+            setError('');
+            setPubkey('');
+            setVerifiedProof(null);
+            setRawJson(null);
+            setStep('upload');
+          }}
+        />
       )}
       {(() => {
         switch (step) {
@@ -144,11 +137,12 @@ export default function FileDrop(): ReactElement {
               />
             );
           case 'result':
-            return verifiedProof ? (
+            return !!verifiedProof && !!file ? (
               <ProofViewer
                 className="h-4/5 w-2/3 flex-shrink-0"
                 verifiedProof={verifiedProof}
                 proof={rawJson}
+                file={file}
               />
             ) : null;
           default:
@@ -156,81 +150,6 @@ export default function FileDrop(): ReactElement {
         }
       })()}
       {error && <span className="text-red-500 text-sm">{error}</span>}
-    </div>
-  );
-}
-
-function PubkeyInput(props: {
-  onNext: (pubkey: string) => void;
-  onBack: () => void;
-  className?: string;
-}) {
-  const [error, setError] = useState('');
-  const [pubkey, setPubkey] = useState('');
-
-  const isValidPEMKey = (key: string): boolean => {
-    try {
-      const trimmedKey = key.trim();
-      if (
-        !trimmedKey.startsWith('-----BEGIN PUBLIC KEY-----') ||
-        !trimmedKey.endsWith('-----END PUBLIC KEY-----')
-      ) {
-        setError('Invalid PEM format: header or footer missing');
-        return false;
-      }
-      const keyContent = trimmedKey
-        .replace('-----BEGIN PUBLIC KEY-----', '')
-        .replace('-----END PUBLIC KEY-----', '')
-        .trim();
-
-      try {
-        atob(keyContent);
-      } catch (err) {
-        setError('Invalid Base64 encoding');
-        return false;
-      }
-
-      return true;
-    } catch (err) {
-      console.error('Error validating key:', err);
-      return false;
-    }
-  };
-
-  const onChange = useCallback(
-    async (e: ChangeEvent<HTMLTextAreaElement>) => {
-      setError('');
-      const pubkey = e.target.value;
-      console.log(pubkey);
-      setPubkey(pubkey);
-    },
-    [pubkey],
-  );
-
-  const onNext = useCallback(() => {
-    if (isValidPEMKey(pubkey)) {
-      props.onNext(pubkey);
-    }
-  }, [pubkey]);
-
-  return (
-    <div className={classNames('flex flex-col gap-2', props.className)}>
-      <div className="font-semibold">Please enter the notary key:</div>
-      <textarea
-        className="outline-0 flex-grow w-full bg-slate-100 rouned-xs !border border-slate-300 focus-within:border-slate-500 resize-none p-2 h-[24rem]"
-        onChange={onChange}
-        placeholder={`-----BEGIN PUBLIC KEY-----\n\n-----END PUBLIC KEY-----`}
-      />
-      <div className="flex flex-row justify-end gap-2 items-center">
-        {error && <span className="text-red-500 text-sm">{error}</span>}
-        <button
-          className="button button--primary self-start"
-          onClick={onNext}
-          disabled={!pubkey || !!error}
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 }

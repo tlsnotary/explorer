@@ -61,11 +61,17 @@ export const fetchProofFromIPFS =
 
     const proof = await verify(data, notaryKey);
 
-    dispatch({
-      type: ActionType.SetIPFSProof,
-      payload: { cid, proof, raw: data },
-    });
+    dispatch(setIPFSProof({ cid, proof, raw: data }));
   };
+
+export const setIPFSProof = (
+  payload: ProofData & {
+    cid: string;
+  },
+) => ({
+  type: ActionType.SetIPFSProof,
+  payload: payload,
+});
 
 export default function proofs(
   state = initState,

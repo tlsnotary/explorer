@@ -1,5 +1,5 @@
 import { AppRootState } from '.';
-import type { Proof } from '../components/types/types';
+import type { Proof } from '../utils/types/types';
 import { useSelector } from 'react-redux';
 
 export enum ActionType {
