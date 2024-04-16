@@ -1,35 +1,66 @@
-import React, { ReactElement, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import ProofDetails from '../ProofDetails';
-import { useNotaryKey } from '../../store/notaryKey';
-import NotaryKey from '../NotaryKey';
+import React, { ReactElement, useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { fetchProofFromIPFS, useIPFSProof } from '../../store/proofs';
 import { useDispatch } from 'react-redux';
+import ProofViewer from '../ProofViewer';
+import { FileDropdown } from '../FileDropdown';
+import { PubkeyInput } from '../../pages/PubkeyInput';
+import { Proof } from '../../utils/types/types';
 
 export default function SharedProof(): ReactElement {
   const { cid } = useParams();
+  const navigate = useNavigate();
   const [errors, setErrors] = useState<string | null>(null);
-  const notaryKey = useNotaryKey();
   const proofData = useIPFSProof(cid);
   const dispatch = useDispatch();
+  const file = new File([JSON.stringify(proofData?.raw)], `${cid}.json`, {
+    type: 'text/plain',
+  });
+  const [verifiedProof, setVerifiedProof] = useState<Proof | null>(
+    proofData?.proof || null,
+  );
 
   useEffect(() => {
     if (!cid) return;
-    dispatch(fetchProofFromIPFS(cid, notaryKey)).catch((e) => {
+    dispatch(fetchProofFromIPFS(cid)).catch((e) => {
       console.error(e);
       setErrors(e.message);
     });
-  }, [cid, notaryKey]);
+  }, [cid]);
+
+  const onVerify = useCallback(
+    async (key = '') => {
+      if (!proofData?.raw) return;
+
+      const { verify } = await import('tlsn-js/src/index');
+      const resp = await verify(proofData?.raw, key);
+      setVerifiedProof(resp);
+    },
+    [proofData?.raw],
+  );
+
+  if (!proofData) return <></>;
 
   return (
-    <div>
-      {<NotaryKey />}
-      <div className="flex flex-col items-center">
-        {!proofData && errors && (
-          <div className="text-red-500 font-bold">{errors}</div>
-        )}
-      </div>
-      {proofData && <ProofDetails proof={proofData.proof} cid={cid} />}
+    <div className="flex flex-col items-center w-full h-screen m-auto gap-2">
+      {!!file && (
+        <FileDropdown
+          files={[file]}
+          onChange={() => null}
+          onDelete={() => navigate('/')}
+        />
+      )}
+      {!!proofData.raw && !verifiedProof && (
+        <PubkeyInput className="w-2/3 flex-shrink-0" onNext={onVerify} />
+      )}
+      {verifiedProof && (
+        <ProofViewer
+          className="h-4/5 w-2/3 flex-shrink-0"
+          file={file}
+          proof={proofData.raw}
+          verifiedProof={verifiedProof}
+        />
+      )}
     </div>
   );
 }

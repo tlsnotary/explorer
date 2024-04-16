@@ -167,7 +167,7 @@ function IPFSLinkModal(props: {
         <input
           readOnly
           value={ipfsLink}
-          className="w-full bg-slate-100 border border-slate-300 outline-0 p-2"
+          className="w-full bg-slate-100 border border-slate-300 outline-0 p-2 cursor-pointer"
           onFocus={(e) => e.target.select()}
         />
       </ModalContent>

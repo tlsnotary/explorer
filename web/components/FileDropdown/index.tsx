@@ -13,7 +13,7 @@ export function FileDropdown(props: {
   return (
     <div className="flex flew-row bg-slate-100 border border-slate-200 text-slate-700 gap-2 p-2 rounded max-w-80">
       <Icon className="text-slate-500 flex-shrink-0" fa="fa-solid fa-file" />
-      <div className="select-none flex-grow flex-shrink text-ellipsis overflow-hidden">
+      <div className="select-none flex-grow flex-shrink text-ellipsis overflow-hidden whitespace-nowrap">
         {file.name}
       </div>
       <Icon

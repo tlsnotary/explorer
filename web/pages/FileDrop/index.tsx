@@ -19,23 +19,12 @@ export default function FileDrop(): ReactElement {
   const [pubkey, setPubkey] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const onVerify = useCallback(
-    async (json: any) => {
-      const { verify } = await import('tlsn-js');
-
-      try {
-        const resp = await verify(json, pubkey);
-        setVerifiedProof(resp);
-      } catch (e: any) {
-        console.error(e);
-        setError(e?.message || 'Invalid Proof');
-        throw new e();
-      }
-
-      setStep('result');
-    },
-    [pubkey],
-  );
+  const onVerify = useCallback(async (json: any, key = '') => {
+    const { verify } = await import('tlsn-js');
+    const resp = await verify(json, key);
+    setVerifiedProof(resp);
+    setStep('result');
+  }, []);
 
   const handleFileUpload = useCallback(
     async (file: any): Promise<void> => {
@@ -70,7 +59,9 @@ export default function FileDrop(): ReactElement {
       try {
         await onVerify(json);
         setFile(file);
-      } catch (e) {}
+      } catch (e: any) {
+        setError(e?.message || 'Invalid proof');
+      }
     },
     [dispatch, onVerify],
   );
@@ -96,7 +87,7 @@ export default function FileDrop(): ReactElement {
     async (key: string) => {
       setPubkey(key);
       if (rawJson) {
-        await onVerify(rawJson);
+        await onVerify(rawJson, key);
       }
     },
     [rawJson, onVerify],
@@ -133,7 +124,6 @@ export default function FileDrop(): ReactElement {
               <PubkeyInput
                 className="w-2/3 flex-shrink-0"
                 onNext={onPubkeyChange}
-                onBack={() => setStep('upload')}
               />
             );
           case 'result':

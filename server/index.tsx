@@ -9,10 +9,11 @@ import { Provider } from 'react-redux';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
-import configureAppStore from '../web/store';
+import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
 import htmlToImage from 'node-html-to-image';
+import { Proof } from 'tlsn-js/build/types';
 
 const app = express();
 const port = 3000;
@@ -66,29 +67,56 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 });
 
 app.get('/ipfs/:cid', async (req, res) => {
-  const file = await getCID(req.params.cid);
-  const jsonProof = JSON.parse(file);
-  const proof = await verify(
-    file,
-    await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
-  );
-  proof.notaryUrl = jsonProof.notaryUrl;
+  let file: string,
+    jsonProof: Proof,
+    proof: {
+      time: number;
+      sent: string;
+      recv: string;
+      notaryUrl: string;
+    };
 
-  const store = configureAppStore({
+  const storeConfig: AppRootState = {
     notaryKey: { key: '' },
     proofUpload: {
       proofs: [],
       selectedProof: null,
     },
-    proofs: {
-      ipfs: {
-        [req.params.cid]: {
-          raw: jsonProof,
-          proof,
-        },
-      },
-    },
-  });
+    proofs: { ipfs: {} },
+  };
+
+  // If there is no file from CID or JSON cannot be parsed, redirect to root
+  try {
+    file = await getCID(req.params.cid);
+    jsonProof = JSON.parse(file);
+  } catch (e) {
+    res.redirect('/');
+    return;
+  }
+
+  storeConfig.proofs.ipfs[req.params.cid] = {
+    raw: jsonProof,
+  };
+
+  /**
+   * Verify the proof if notary url exist
+   * redirect to root if verification fails
+   */
+  if (jsonProof.notaryUrl) {
+    try {
+      proof = await verify(
+        file,
+        await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
+      );
+      proof.notaryUrl = jsonProof.notaryUrl;
+      storeConfig.proofs.ipfs[req.params.cid].proof = proof;
+    } catch (e) {
+      res.redirect('/');
+      return;
+    }
+  }
+
+  const store = configureAppStore(storeConfig);
   const html = renderToString(
     <Provider store={store}>
       <StaticRouter location={req.url}>
@@ -105,7 +133,6 @@ app.get('/ipfs/:cid', async (req, res) => {
 
   const imgUrl = 'data:image/png;base64,' + img.toString('base64');
 
-  console.log(imgUrl);
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
@@ -113,7 +140,7 @@ app.get('/ipfs/:cid', async (req, res) => {
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:image" content="${imgUrl}" />
-      <title>Popup</title>
+      <title>TLSNotary Explorer</title>
       <script>
         window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState)};
       </script>

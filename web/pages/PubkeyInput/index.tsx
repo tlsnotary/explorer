@@ -2,8 +2,7 @@ import React, { ChangeEvent, useCallback, useState } from 'react';
 import classNames from 'classnames';
 
 export function PubkeyInput(props: {
-  onNext: (pubkey: string) => void;
-  onBack: () => void;
+  onNext: (pubkey: string) => Promise<void>;
   className?: string;
 }) {
   const [error, setError] = useState('');
@@ -42,15 +41,22 @@ export function PubkeyInput(props: {
     async (e: ChangeEvent<HTMLTextAreaElement>) => {
       setError('');
       const pubkey = e.target.value;
-      console.log(pubkey);
       setPubkey(pubkey);
     },
     [pubkey],
   );
 
-  const onNext = useCallback(() => {
+  const onNext = useCallback(async () => {
     if (isValidPEMKey(pubkey)) {
-      props.onNext(pubkey);
+      try {
+        await props.onNext(pubkey);
+      } catch (e: any) {
+        if (typeof e === 'string') {
+          setError(e);
+        } else {
+          setError(e?.message || 'Unable to verify proof');
+        }
+      }
     }
   }, [pubkey]);
 

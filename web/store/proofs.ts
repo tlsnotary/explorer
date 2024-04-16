@@ -3,6 +3,7 @@ import { AppRootState } from './index';
 import type { Proof } from 'tlsn-js/build/types';
 import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
+import { EXPLORER_URL } from '../utils/constants';
 
 enum ActionType {
   SetIPFSProof = 'proofs/setIPFSProof',
@@ -17,7 +18,7 @@ export type Action<payload = any> = {
 
 type ProofData = {
   raw: Proof;
-  proof: {
+  proof?: {
     time: number;
     sent: string;
     recv: string;
@@ -46,7 +47,7 @@ export const fetchProofFromIPFS =
     let data;
 
     if (!old?.raw) {
-      const response = await fetch(`/gateway/ipfs/${cid}`);
+      const response = await fetch(EXPLORER_URL + `/gateway/ipfs/${cid}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch file from IPFS');

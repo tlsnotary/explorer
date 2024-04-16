@@ -150,6 +150,11 @@ var options = {
           to: path.join(__dirname, "build", "ui"),
           force: true,
         },
+        {
+          from: "static/favicon.png",
+          to: path.join(__dirname, "build", "ui"),
+          force: true,
+        },
       ]
     }),
     new HtmlWebpackPlugin({
