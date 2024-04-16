@@ -63,8 +63,8 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({proof, cid, file}): ReactEle
 
   const proofToDisplay = selectedProof?.proof || proof;
   const inputValue = process.env.NODE_ENV === "development"
-    ? `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`
-    : `https://explorer-tlsn.pse.dev/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
+    ? `http://localhost:3000/ipfs/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`
+    : `https://explorer-tlsn.pse.dev/ipfs/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
 
   // TODO - Format proof details for redacted data
 

@@ -95,7 +95,6 @@ app.get('/ipfs/:cid', async (req, res) => {
 
   const imgUrl= 'data:image/png;base64,' + img.toString('base64');
 
-  console.log(imgUrl);
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
