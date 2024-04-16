@@ -1,23 +1,26 @@
 import React, { ChangeEvent, ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { uploadFile } from '../../store/proofupload';
 import { readFileAsync, safeParseJSON } from '../../utils';
-import ProofDetails from '../../components/ProofDetails';
 import FileUploadInput from '../../components/FileUploadInput';
 import classNames from 'classnames';
-import { Proof } from 'tlsn-js/build/types';
+import ProofViewer from '../../components/ProofViewer';
+import { Proof as VerifiedProof } from '../../components/types/types';
+import Icon from '../../components/Icon';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
   const [error, setError] = useState<string | null>(null);
-  const [verifiedProof, setVerifiedProof] = useState<any>(null);
-  const [proofJson, setProofJson] = useState<Proof | null>(null);
+  const [verifiedProof, setVerifiedProof] = useState<VerifiedProof | null>(
+    null,
+  );
+  const [rawJson, setRawJson] = useState<any | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [step, setStep] = useState<'upload' | 'pubkey' | 'result'>('upload');
   const [pubkey, setPubkey] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const onVerify = useCallback(
-    async (json: Proof) => {
+    async (json: any) => {
       const { verify } = await import('tlsn-js');
 
       try {
@@ -26,9 +29,10 @@ export default function FileDrop(): ReactElement {
       } catch (e: any) {
         console.error(e);
         setError(e?.message || 'Invalid Proof');
-        return;
+        throw new e();
       }
 
+      setStep('result');
       // dispatch(uploadFile(file.name, verifiedProof));
     },
     [pubkey],
@@ -46,77 +50,112 @@ export default function FileDrop(): ReactElement {
         return;
       }
 
-      setFile(file);
       setError(null);
 
       const proofContent = await readFileAsync(file);
       const json = safeParseJSON(proofContent);
 
       if (!json) {
-        setStep('pubkey');
         setError(proofContent || 'Invalid proof');
         return;
       }
 
-      setProofJson(json);
+      setRawJson(json);
 
       if (!json?.notaryUrl) {
         setStep('pubkey');
+        setFile(file);
         return;
       }
 
-      return onVerify(json);
+      onVerify(json).then(() => setFile(file));
     },
     [dispatch, onVerify],
   );
 
   const onFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       e.preventDefault();
 
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        handleFileUpload(files[0]);
+      try {
+        setUploading(true);
+        const files = e.target.files;
+        if (files && files.length > 0) {
+          await handleFileUpload(files[0]);
+        }
+      } finally {
+        setUploading(false);
       }
     },
     [handleFileUpload],
   );
 
   const onPubkeyChange = useCallback(
-    (key: string) => {
+    async (key: string) => {
       setPubkey(key);
-      if (proofJson) onVerify(proofJson);
-      // setStep('result');
+      if (rawJson) {
+        await onVerify(rawJson);
+      }
     },
-    [proofJson, onVerify],
+    [rawJson, onVerify],
   );
 
   return (
-    <div className="flex flex-col items-center h-screen w-2/5 m-auto ">
+    <div className="flex flex-col items-center w-full h-screen m-auto gap-2">
+      {!!file && (
+        <div className="flex flew-row bg-yellow-100 border border-yellow-200 text-yellow-700 gap-2 p-2 rounded max-w-60">
+          <Icon
+            className="text-yellow-500 flex-shrink-0"
+            fa="fa-solid fa-file"
+          />
+          <div className="select-none flex-grow flex-shrink text-ellipsis overflow-hidden">
+            {file.name}
+          </div>
+          <Icon
+            fa="fa-solid fa-close flex-shrink-0"
+            className="text-red-300 hover:text-red-500"
+            onClick={() => {
+              setFile(null);
+              setError('');
+              setPubkey('');
+              setVerifiedProof(null);
+              setRawJson(null);
+              setStep('upload');
+            }}
+          />
+        </div>
+      )}
       {(() => {
         switch (step) {
           case 'upload':
             return (
               <FileUploadInput
-                className="h-[24rem] w-full flex-shrink-0"
+                className="h-[24rem] w-2/3 flex-shrink-0"
                 onFileChange={onFileChange}
+                loading={uploading}
               />
             );
           case 'pubkey':
             return (
               <PubkeyInput
-                className="w-full flex-shrink-0"
+                className="w-2/3 flex-shrink-0"
                 onNext={onPubkeyChange}
                 onBack={() => setStep('upload')}
               />
             );
           case 'result':
+            return verifiedProof ? (
+              <ProofViewer
+                className="h-4/5 w-2/3 flex-shrink-0"
+                verifiedProof={verifiedProof}
+                proof={rawJson}
+              />
+            ) : null;
           default:
             return null;
         }
       })()}
-      {!error && <ProofDetails proof={verifiedProof} file={file} />}
-      {error && <span className="text-red-500 text-xs">{error}</span>}
+      {error && <span className="text-red-500 text-sm">{error}</span>}
     </div>
   );
 }
@@ -184,9 +223,6 @@ function PubkeyInput(props: {
       />
       <div className="flex flex-row justify-end gap-2 items-center">
         {error && <span className="text-red-500 text-sm">{error}</span>}
-        <button className="button self-start" onClick={props.onBack}>
-          Back
-        </button>
         <button
           className="button button--primary self-start"
           onClick={onNext}
