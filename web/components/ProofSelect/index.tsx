@@ -1,18 +1,19 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectProof } from '../../store/proofupload';
+import { selectProof, useSelectedProof } from '../../store/proofupload';
 
 export default function ProofSelect(): ReactElement {
   const dispatch = useDispatch();
-
+  const selectedProof = useSelectedProof();
   const proofs = useSelector((state: any) => state.proofUpload.proofs);
 
 
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+
+  const handleChange = useCallback(async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedIndex = e.target.selectedIndex;
     const proof = proofs[selectedIndex - 1];
     dispatch(selectProof(proof));
-  }
+  }, []);
 
   return (
     <div className='flex flex-row m-auto items-center h-10 bg-gray-800 rounded gap-4 text-black'>
@@ -20,7 +21,7 @@ export default function ProofSelect(): ReactElement {
       <select onChange={handleChange} className='bg-gray-800 text-white font-bold'>
         <option disabled className='font-bold'>Select a proof</option>
         {proofs && proofs.map((proof: any, index: number) => (
-          <option key={index} className='bg-gray-800 text-white font-bold'>
+          <option key={index} className='bg-gray-800 text-white font-bold' selected={selectedProof === proof ? selectedProof : proof}>
             {proof.fileName}
           </option>
         ))}

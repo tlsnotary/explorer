@@ -1,6 +1,6 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { uploadFile } from '../../store/proofupload';
+import { uploadFile, selectProof } from '../../store/proofupload';
 import { readFileAsync } from '../../utils';
 import NotaryKey from '../NotaryKey';
 import ProofDetails from '../ProofDetails';
