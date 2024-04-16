@@ -1,4 +1,4 @@
-import React, { ReactElement, useRef } from 'react';
+import React, { ReactElement } from 'react';
 
 
 export const readFileAsync = (file: File): Promise<string> => {
