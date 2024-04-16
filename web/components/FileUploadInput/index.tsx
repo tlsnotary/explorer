@@ -9,7 +9,7 @@ export default function FileUploadInput(props: {
   return (
     <div
       className={classNames(
-        'flex flex-col flex-nowrap flex-grow flex-shrink min-h-80 overflow-y-auto',
+        'flex flex-col flex-nowrap overflow-y-auto',
         props.className,
       )}
     >

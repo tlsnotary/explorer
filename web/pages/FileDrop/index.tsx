@@ -5,14 +5,34 @@ import { readFileAsync, safeParseJSON } from '../../utils';
 import ProofDetails from '../../components/ProofDetails';
 import FileUploadInput from '../../components/FileUploadInput';
 import classNames from 'classnames';
+import { Proof } from 'tlsn-js/build/types';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
   const [error, setError] = useState<string | null>(null);
   const [verifiedProof, setVerifiedProof] = useState<any>(null);
+  const [proofJson, setProofJson] = useState<Proof | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [step, setStep] = useState<'upload' | 'pubkey' | 'result'>('upload');
   const [pubkey, setPubkey] = useState('');
+
+  const onVerify = useCallback(
+    async (json: Proof) => {
+      const { verify } = await import('tlsn-js');
+
+      try {
+        const resp = await verify(json, pubkey);
+        setVerifiedProof(resp);
+      } catch (e: any) {
+        console.error(e);
+        setError(e?.message || 'Invalid Proof');
+        return;
+      }
+
+      // dispatch(uploadFile(file.name, verifiedProof));
+    },
+    [pubkey],
+  );
 
   const handleFileUpload = useCallback(
     async (file: any): Promise<void> => {
@@ -32,24 +52,22 @@ export default function FileDrop(): ReactElement {
       const proofContent = await readFileAsync(file);
       const json = safeParseJSON(proofContent);
 
+      if (!json) {
+        setStep('pubkey');
+        setError(proofContent || 'Invalid proof');
+        return;
+      }
+
+      setProofJson(json);
+
       if (!json?.notaryUrl) {
         setStep('pubkey');
         return;
       }
 
-      const { verify } = await import('tlsn-js');
-
-      try {
-        const resp = await verify(json);
-        setVerifiedProof(resp);
-      } catch (e: any) {
-        console.error(e);
-        setError(e?.message || 'Invalid Proof');
-        return;
-      }
-      dispatch(uploadFile(file.name, verifiedProof));
+      return onVerify(json);
     },
-    [dispatch],
+    [dispatch, onVerify],
   );
 
   const onFileChange = useCallback(
@@ -64,21 +82,31 @@ export default function FileDrop(): ReactElement {
     [handleFileUpload],
   );
 
+  const onPubkeyChange = useCallback(
+    (key: string) => {
+      setPubkey(key);
+      if (proofJson) onVerify(proofJson);
+      // setStep('result');
+    },
+    [proofJson, onVerify],
+  );
+
   return (
-    <div className="h-screen w-4/5 m-auto ">
+    <div className="flex flex-col items-center h-screen w-2/5 m-auto ">
       {(() => {
         switch (step) {
           case 'upload':
             return (
               <FileUploadInput
-                className="h-[32rem]"
+                className="h-[24rem] w-full flex-shrink-0"
                 onFileChange={onFileChange}
               />
             );
           case 'pubkey':
             return (
               <PubkeyInput
-                onNext={() => null}
+                className="w-full flex-shrink-0"
+                onNext={onPubkeyChange}
                 onBack={() => setStep('upload')}
               />
             );
@@ -88,13 +116,13 @@ export default function FileDrop(): ReactElement {
         }
       })()}
       {!error && <ProofDetails proof={verifiedProof} file={file} />}
-      {error}
+      {error && <span className="text-red-500 text-xs">{error}</span>}
     </div>
   );
 }
 
 function PubkeyInput(props: {
-  onNext: () => void;
+  onNext: (pubkey: string) => void;
   onBack: () => void;
   className?: string;
 }) {
@@ -132,19 +160,25 @@ function PubkeyInput(props: {
 
   const onChange = useCallback(
     async (e: ChangeEvent<HTMLTextAreaElement>) => {
-      if (isValidPEMKey(e.target.value)) {
-        const pubkey = e.target.value;
-        console.log(pubkey);
-      }
+      setError('');
+      const pubkey = e.target.value;
+      console.log(pubkey);
+      setPubkey(pubkey);
     },
     [pubkey],
   );
 
+  const onNext = useCallback(() => {
+    if (isValidPEMKey(pubkey)) {
+      props.onNext(pubkey);
+    }
+  }, [pubkey]);
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className={classNames('flex flex-col gap-2', props.className)}>
       <div className="font-semibold">Please enter the notary key:</div>
       <textarea
-        className="outline-0 flex-grow w-full bg-slate-200 rouned-xs !border border-slate-200 focus-within:border-slate-500 resize-none p-2 h-[32rem]"
+        className="outline-0 flex-grow w-full bg-slate-100 rouned-xs !border border-slate-300 focus-within:border-slate-500 resize-none p-2 h-[24rem]"
         onChange={onChange}
         placeholder={`-----BEGIN PUBLIC KEY-----\n\n-----END PUBLIC KEY-----`}
       />
@@ -155,7 +189,8 @@ function PubkeyInput(props: {
         </button>
         <button
           className="button button--primary self-start"
-          onClick={props.onNext}
+          onClick={onNext}
+          disabled={!pubkey || !!error}
         >
           Next
         </button>
