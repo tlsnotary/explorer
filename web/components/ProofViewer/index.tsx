@@ -6,7 +6,6 @@ import React, {
   useCallback,
 } from 'react';
 import c from 'classnames';
-import classNames from 'classnames';
 import { Proof as VerifiedProof } from '../../utils/types/types';
 import { Proof } from 'tlsn-js/build/types';
 import Modal, { ModalContent, ModalFooter, ModalHeader } from '../Modal';
@@ -44,7 +43,7 @@ export default function ProofViewer(props: {
   }, [props.file, props.verifiedProof, props.proof]);
 
   return (
-    <div className={classNames('flex flex-col py-2 gap-2', props.className)}>
+    <div className={c('flex flex-col py-2 gap-2', props.className)}>
       {showingShareWarning && (
         <ShareWarningModal
           onClose={() => showShareWarning(false)}

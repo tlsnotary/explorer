@@ -6,6 +6,8 @@ import ProofViewer from '../../components/ProofViewer';
 import { Proof as VerifiedProof } from '../../utils/types/types';
 import { FileDropdown } from '../../components/FileDropdown';
 import { PubkeyInput } from '../PubkeyInput';
+import type { Proof } from 'tlsn-js/build/types';
+
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
@@ -19,7 +21,7 @@ export default function FileDrop(): ReactElement {
   const [pubkey, setPubkey] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const onVerify = useCallback(async (json: any, key = '') => {
+  const onVerify = useCallback(async (json: Proof, key = '') => {
     const { verify } = await import('tlsn-js');
     const resp = await verify(json, key);
     setVerifiedProof(resp);
