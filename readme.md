@@ -1,6 +1,20 @@
+![MIT licensed][mit-badge]
+![Apache licensed][apache-badge]
+
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[apache-badge]: https://img.shields.io/github/license/saltstack/salt
+
 # TLSN Explorer
 
 TLSN Explorer is server that will handle the social discovery and visualization of proofs generated from the TLS Notary protocol.
+
+## License
+This repository is licensed under either of
+
+- [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+- [MIT license](http://opensource.org/licenses/MIT)
+
+at your option.
 
 ## Set up .env
 1. `cp .env.sample .env`
