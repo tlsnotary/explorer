@@ -122,10 +122,11 @@ function ShareWarningModal(props: {
       setUploading(false);
     }
   }, []);
+
   return (
     <Modal className="w-2/3 max-w-[45rem]" onClose={props.onClose}>
       <ModalHeader>Sharing a Proof</ModalHeader>
-      <ModalContent className="py-2 px-4">
+      <ModalContent className="py-2 px-4 text-center">
         This will upload your proof to IPFS. Anyone with the url will be able to
         view your proof. Are you sure you want to proceed?
       </ModalContent>

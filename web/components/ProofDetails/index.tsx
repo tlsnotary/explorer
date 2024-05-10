@@ -6,6 +6,7 @@ import Modal, { ModalContent, ModalHeader, ModalFooter } from '../Modal';
 import { copyText } from '../../utils';
 import { useSelectedProof } from '../../store/proofupload';
 import { uploadFileToIpfs } from '../../store/upload';
+import { EXPLORER_URL } from '../../utils/constants';
 import Icon from '../Icon';
 
 interface ProofDetailsProps {
@@ -69,7 +70,7 @@ const ProofDetails: React.FC<ProofDetailsProps> = ({
   const inputValue =
     process.env.NODE_ENV === 'development'
       ? `http://localhost:3000/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`
-      : `www.tlsnexplorer.com/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
+      : `${EXPLORER_URL}/${selectedProof?.ipfsCID ? selectedProof?.ipfsCID : cid}`;
 
   // TODO - Format proof details for redacted data
 
