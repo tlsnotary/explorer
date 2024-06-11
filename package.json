@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:ui": "NODE_ENV=production webpack --config webpack.web.config.js",
+    "build:wasm": "build-wasm.sh",
     "watch:ui": "NODE_ENV=development webpack --config webpack.web.config.js --watch",
     "dev:ui": "NODE_ENV=development webpack-dev-server  --config webpack.web.config.js --hot",
     "build:server": "NODE_ENV=production webpack --config webpack.server.config.js",
@@ -12,7 +13,7 @@
     "nodemon:server": "NODE_ENV=development nodemon build/server/index.bundle.js",
     "dev:server": "NODE_ENV=development concurrently npm:watch:server npm:nodemon:server",
     "start": "node build/server/index.bundle.js",
-    "build": "concurrently npm:build:ui npm:build:server",
+    "build": "concurrently npm:build:wasm npm:build:ui npm:build:server",
     "dev": "concurrently npm:watch:ui npm:dev:server",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
