@@ -7,7 +7,6 @@ import { Proof as VerifiedProof } from '../../utils/types/types';
 import { FileDropdown } from '../../components/FileDropdown';
 import { PubkeyInput } from '../PubkeyInput';
 
-const i = 0;
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
   const [error, setError] = useState<string | null>(null);
