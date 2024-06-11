@@ -67,73 +67,55 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 });
 
 app.get('/ipfs/:cid', async (req, res) => {
-  let file: string,
-    jsonProof: Proof,
-    proof: {
-      time: number;
-      sent: string;
-      recv: string;
-      notaryUrl: string;
-    };
-
-  const storeConfig: AppRootState = {
-    notaryKey: { key: '' },
-    proofUpload: {
-      proofs: [],
-      selectedProof: null,
-    },
-    proofs: { ipfs: {} },
-  };
-
   // If there is no file from CID or JSON cannot be parsed, redirect to root
   try {
-    file = await getCID(req.params.cid);
-    jsonProof = JSON.parse(file);
-  } catch (e) {
-    res.redirect('/');
-    return;
-  }
+    const storeConfig: AppRootState = {
+      notaryKey: { key: '' },
+      proofUpload: {
+        proofs: [],
+        selectedProof: null,
+      },
+      proofs: { ipfs: {} },
+    };
 
-  storeConfig.proofs.ipfs[req.params.cid] = {
-    raw: jsonProof,
-  };
+    const file = await getCID(req.params.cid);
+    const jsonProof: Proof = JSON.parse(file);
 
-  /**
-   * Verify the proof if notary url exist
-   * redirect to root if verification fails
-   */
-  if (jsonProof.notaryUrl) {
-    try {
-      proof = await verify(
+    storeConfig.proofs.ipfs[req.params.cid] = {
+      raw: jsonProof,
+    };
+
+    /**
+     * Verify the proof if notary url exist
+     * redirect to root if verification fails
+     */
+    if (jsonProof.notaryUrl) {
+      const proof = await verify(
         file,
         await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
       );
       proof.notaryUrl = jsonProof.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = proof;
-    } catch (e) {
-      res.redirect('/');
-      return;
     }
-  }
 
-  const store = configureAppStore(storeConfig);
-  const html = renderToString(
-    <Provider store={store}>
-      <StaticRouter location={req.url}>
-        <App />
-      </StaticRouter>
-    </Provider>,
-  );
+    const store = configureAppStore(storeConfig);
+    const html = renderToString(
+      <Provider store={store}>
+        <StaticRouter location={req.url}>
+          <App />
+        </StaticRouter>
+      </Provider>,
+    );
 
-  const preloadedState = store.getState();
+    const preloadedState = store.getState();
 
-  const img = await htmlToImage({
-    html: html,
-  });
+    const img = await htmlToImage({
+      html: html,
+    });
 
-  const imgUrl = 'data:image/png;base64,' + img.toString('base64');
+    const imgUrl = 'data:image/png;base64,' + img.toString('base64');
 
-  res.send(`
+    res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -152,6 +134,11 @@ app.get('/ipfs/:cid', async (req, res) => {
     </body>
     </html>
   `);
+  } catch (e) {
+    console.error(e);
+    res.redirect('/');
+    return;
+  }
 });
 
 app.get('*', (req, res) => {
