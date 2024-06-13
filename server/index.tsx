@@ -12,7 +12,6 @@ import { StaticRouter } from 'react-router-dom/server';
 import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
-import htmlToImage from 'node-html-to-image';
 import { Proof } from 'tlsn-js/build/types';
 
 const app = express();
@@ -109,11 +108,17 @@ app.get('/ipfs/:cid', async (req, res) => {
 
     const preloadedState = store.getState();
 
-    const img = await htmlToImage({
-      html: html,
-    });
-
-    const imgUrl = 'data:image/png;base64,' + img.toString('base64');
+    const imgUrl =
+      'data:image/svg+xml,' +
+      encodeURIComponent(`
+        <svg width="86" height="88" viewBox="0 0 86 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M25.5484 0.708986C25.5484 0.17436 26.1196 -0.167376 26.5923 0.0844205L33.6891 3.86446C33.9202 3.98756 34.0645 4.22766 34.0645 4.48902V9.44049H37.6129C38.0048 9.44049 38.3226 9.75747 38.3226 10.1485V21.4766L36.1936 20.0606V11.5645H34.0645V80.9919C34.0645 81.1134 34.0332 81.2328 33.9735 81.3388L30.4251 87.6388C30.1539 88.1204 29.459 88.1204 29.1878 87.6388L25.6394 81.3388C25.5797 81.2328 25.5484 81.1134 25.5484 80.9919V0.708986Z" fill="#243F5F"/>
+          <path d="M21.2903 25.7246V76.7012H12.7742V34.2207H0V25.7246H21.2903Z" fill="#243F5F"/>
+          <path d="M63.871 76.7012H72.3871V34.2207H76.6452V76.7012H85.1613V25.7246H63.871V76.7012Z" fill="#243F5F"/>
+          <path d="M38.3226 25.7246H59.6129V34.2207H46.8387V46.9649H59.6129V76.7012H38.3226V68.2051H51.0968V55.4609H38.3226V25.7246Z" fill="#243F5F"/>
+        </svg>`)
+        .replace(/'/g, '%27')
+        .replace(/"/g, '%22');
 
     res.send(`
     <!DOCTYPE html>
@@ -150,8 +155,11 @@ app.listen(port, () => {
 });
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
-  const res = await fetch(notaryUrl + '/info');
+  const res = await fetch(
+    notaryUrl.replace('localhost', '127.0.0.1') + '/info',
+  );
   const json: any = await res.json();
+
   if (!json.publicKey) throw new Error('invalid response');
   return json.publicKey;
 }

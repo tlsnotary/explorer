@@ -6,6 +6,7 @@ import ProofViewer from '../ProofViewer';
 import { FileDropdown } from '../FileDropdown';
 import { PubkeyInput } from '../../pages/PubkeyInput';
 import { Proof } from '../../utils/types/types';
+import { File } from '@web-std/file';
 
 export default function SharedProof(): ReactElement {
   const { cid } = useParams();
