@@ -4,6 +4,8 @@ import type { Proof } from 'tlsn-js-v5/build/types';
 import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
 import { EXPLORER_URL } from '../utils/constants';
+import { Attestation } from '../utils/types/types';
+import { verify } from '../utils';
 
 enum ActionType {
   SetIPFSProof = 'proofs/setIPFSProof',
@@ -17,7 +19,7 @@ export type Action<payload = any> = {
 };
 
 type ProofData = {
-  raw: Proof;
+  raw: Attestation;
   proof?: {
     time: number;
     sent: string;
@@ -57,8 +59,6 @@ export const fetchProofFromIPFS =
     } else {
       data = old.raw;
     }
-
-    const { verify } = await import('tlsn-js-v5/src');
 
     const proof = await verify(data, notaryKey);
 

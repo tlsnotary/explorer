@@ -1,13 +1,14 @@
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import classNames from 'classnames';
-import { Proof } from 'tlsn-js-v5/build/types';
+import { Attestation } from '../../utils/types/types';
 
 export function PubkeyInput(props: {
   onNext: (pubkey: string) => Promise<void>;
-  proof: Proof;
+  proof: Attestation;
   setError?: (msg: string) => void;
   className?: string;
 }) {
+  const { proof } = props;
   const [error, setError] = useState('');
   const [pubkey, setPubkey] = useState('');
 
@@ -69,7 +70,7 @@ export function PubkeyInput(props: {
       <div className="font-semibold text-sm cursor-default">
         Please enter the notary key for{' '}
         <span className="text-blue-500 italic font-normal">
-          {props.proof.notaryUrl}
+          {proof.version === '1.0' ? proof.meta.notaryUrl : proof.notaryUrl}
         </span>
         :
       </div>

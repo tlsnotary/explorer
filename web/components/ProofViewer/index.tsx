@@ -7,8 +7,7 @@ import React, {
 } from 'react';
 import c from 'classnames';
 import classNames from 'classnames';
-import { Proof as VerifiedProof } from '../../utils/types/types';
-import { Proof } from 'tlsn-js-v5/build/types';
+import { Attestation, Proof as VerifiedProof } from '../../utils/types/types';
 import Modal, { ModalContent, ModalFooter, ModalHeader } from '../Modal';
 import Icon from '../Icon';
 import { useDispatch } from 'react-redux';
@@ -20,7 +19,7 @@ import copy from 'copy-to-clipboard';
 export default function ProofViewer(props: {
   file: File;
   verifiedProof: VerifiedProof;
-  proof: Proof;
+  proof: Attestation;
   className?: string;
 }): ReactElement {
   const [tab, setTab] = useState('sent');
@@ -77,7 +76,11 @@ export default function ProofViewer(props: {
           <div className="w-full bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono">
             <div>
               <div>Notary URL:</div>
-              <div>{props.proof.notaryUrl}</div>
+              <div>
+                {props.proof.version === '1.0'
+                  ? props.proof.meta.notaryUrl
+                  : props.proof.notaryUrl}
+              </div>
             </div>
           </div>
         )}

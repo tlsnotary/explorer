@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
-import path from 'path';
 import { addBytes, getCID } from './services/ipfs';
 import App from '../web/pages/App';
 import { Provider } from 'react-redux';
@@ -68,6 +67,13 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 app.get('/ipfs/:cid', async (req, res) => {
   // If there is no file from CID or JSON cannot be parsed, redirect to root
   try {
+    const { cid } = req.params;
+    const [, isWasm] = cid.split('.');
+
+    if (isWasm) {
+      return res.redirect(`/${cid}`);
+    }
+
     const storeConfig: AppRootState = {
       notaryKey: { key: '' },
       proofUpload: {

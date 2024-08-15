@@ -1,9 +1,9 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { readFileAsync, safeParseJSON } from '../../utils';
+import { readFileAsync, safeParseJSON, verify } from '../../utils';
 import FileUploadInput from '../../components/FileUploadInput';
 import ProofViewer from '../../components/ProofViewer';
-import { Proof as VerifiedProof } from '../../utils/types/types';
+import { Attestation, Proof as VerifiedProof } from '../../utils/types/types';
 import { FileDropdown } from '../../components/FileDropdown';
 import { PubkeyInput } from '../PubkeyInput';
 
@@ -19,8 +19,7 @@ export default function FileDrop(): ReactElement {
   const [pubkey, setPubkey] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const onVerify = useCallback(async (json: any, key = '') => {
-    const { verify } = await import('tlsn-js-v5');
+  const onVerify = useCallback(async (json: Attestation, key = '') => {
     try {
       const resp = await verify(json, key);
       setVerifiedProof(resp);
@@ -52,7 +51,7 @@ export default function FileDrop(): ReactElement {
       setError('');
 
       const proofContent = await readFileAsync(file);
-      const json = safeParseJSON(proofContent);
+      const json: Attestation = safeParseJSON(proofContent);
 
       if (!json) {
         setError(proofContent || 'Invalid proof');
@@ -61,11 +60,11 @@ export default function FileDrop(): ReactElement {
 
       setRawJson(json);
 
-      if (!json?.notaryUrl) {
-        setStep('pubkey');
-        setFile(file);
-        return;
-      }
+      // if (!json?.notaryUrl) {
+      //   setStep('pubkey');
+      //   setFile(file);
+      //   return;
+      // }
 
       try {
         await onVerify(json);

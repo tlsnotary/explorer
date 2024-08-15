@@ -7,6 +7,7 @@ import { FileDropdown } from '../FileDropdown';
 import { PubkeyInput } from '../../pages/PubkeyInput';
 import { Proof } from '../../utils/types/types';
 import { File } from '@web-std/file';
+import { verify } from '../../utils';
 
 export default function SharedProof(): ReactElement {
   const { cid } = useParams();
@@ -32,8 +33,6 @@ export default function SharedProof(): ReactElement {
   const onVerify = useCallback(
     async (key = '') => {
       if (!proofData?.raw) return;
-
-      const { verify } = await import('tlsn-js-v5/src/index');
       const resp = await verify(proofData?.raw, key);
       setVerifiedProof(resp);
     },
@@ -51,19 +50,19 @@ export default function SharedProof(): ReactElement {
           onDelete={() => navigate('/')}
         />
       )}
-      {!!proofData.raw && !verifiedProof && (
+      {!!proofData.raw && !verifiedProof && !proofData.proof && (
         <PubkeyInput
           className="w-2/3 flex-shrink-0"
           onNext={onVerify}
           proof={proofData.raw}
         />
       )}
-      {verifiedProof && (
+      {(verifiedProof || proofData.proof) && (
         <ProofViewer
           className="h-4/5 w-2/3 flex-shrink-0"
           file={file}
           proof={proofData.raw}
-          verifiedProof={verifiedProof}
+          verifiedProof={verifiedProof || proofData.proof!}
         />
       )}
     </div>
