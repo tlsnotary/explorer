@@ -20,7 +20,7 @@ export default function FileDrop(): ReactElement {
   const [uploading, setUploading] = useState(false);
 
   const onVerify = useCallback(async (json: any, key = '') => {
-    const { verify } = await import('tlsn-js');
+    const { verify } = await import('tlsn-js-v5');
     try {
       const resp = await verify(json, key);
       setVerifiedProof(resp);

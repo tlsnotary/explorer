@@ -1,6 +1,6 @@
 import { ThunkDispatch } from 'redux-thunk';
 import { AppRootState } from './index';
-import type { Proof } from 'tlsn-js/build/types';
+import type { Proof } from 'tlsn-js-v5/build/types';
 import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
 import { EXPLORER_URL } from '../utils/constants';
@@ -58,7 +58,7 @@ export const fetchProofFromIPFS =
       data = old.raw;
     }
 
-    const { verify } = await import('tlsn-js/src');
+    const { verify } = await import('tlsn-js-v5/src');
 
     const proof = await verify(data, notaryKey);
 

@@ -33,7 +33,7 @@ export default function SharedProof(): ReactElement {
     async (key = '') => {
       if (!proofData?.raw) return;
 
-      const { verify } = await import('tlsn-js/src/index');
+      const { verify } = await import('tlsn-js-v5/src/index');
       const resp = await verify(proofData?.raw, key);
       setVerifiedProof(resp);
     },

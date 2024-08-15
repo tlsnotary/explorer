@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import classNames from 'classnames';
-import { Proof } from 'tlsn-js/build/types';
+import { Proof } from 'tlsn-js-v5/build/types';
 
 export function PubkeyInput(props: {
   onNext: (pubkey: string) => Promise<void>;
@@ -74,7 +74,7 @@ export function PubkeyInput(props: {
         :
       </div>
       <textarea
-        className="outline-0 flex-grow w-full bg-slate-100 rouned-xs !border border-slate-300 focus-within:border-slate-500 resize-none p-2 h-[24rem]"
+        className="outline-0 flex-grow w-full bg-slate-100 rouned-xs !border border-slate-300 focus-within:border-slate-500 resize-none p-2 h-[24rem] font-mono text-xs"
         onChange={onChange}
         placeholder={`-----BEGIN PUBLIC KEY-----\n\n-----END PUBLIC KEY-----`}
         value={pubkey}

@@ -82,7 +82,7 @@ var options = {
       },
       {
         test: /\.(ts|tsx)$/,
-        exclude: /node_modules\/(?!(tlsn-js)\/).*/,
+        exclude: /node_modules\/(?!(tlsn-js|tlsn-js-v5)\/).*/,
         use: [
           {
             loader: require.resolve("ts-loader"),
@@ -145,6 +145,11 @@ var options = {
     new webpack.EnvironmentPlugin(["NODE_ENV"]),
     new CopyWebpackPlugin({
       patterns: [
+        {
+          from: "node_modules/tlsn-js-v5/build",
+          to: path.join(__dirname, "build", "ui"),
+          force: true,
+        },
         {
           from: "node_modules/tlsn-js/build",
           to: path.join(__dirname, "build", "ui"),

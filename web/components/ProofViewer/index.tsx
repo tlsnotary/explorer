@@ -8,7 +8,7 @@ import React, {
 import c from 'classnames';
 import classNames from 'classnames';
 import { Proof as VerifiedProof } from '../../utils/types/types';
-import { Proof } from 'tlsn-js/build/types';
+import { Proof } from 'tlsn-js-v5/build/types';
 import Modal, { ModalContent, ModalFooter, ModalHeader } from '../Modal';
 import Icon from '../Icon';
 import { useDispatch } from 'react-redux';

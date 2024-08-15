@@ -12,7 +12,7 @@ import { StaticRouter } from 'react-router-dom/server';
 import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
-import { Proof } from 'tlsn-js/build/types';
+import { Proof } from 'tlsn-js-v5/build/types';
 
 const app = express();
 const port = 3000;
