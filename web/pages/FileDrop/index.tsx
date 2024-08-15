@@ -9,7 +9,7 @@ import { PubkeyInput } from '../PubkeyInput';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
   const [verifiedProof, setVerifiedProof] = useState<VerifiedProof | null>(
     null,
   );
@@ -25,7 +25,14 @@ export default function FileDrop(): ReactElement {
       const resp = await verify(json, key);
       setVerifiedProof(resp);
       setStep('result');
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.message !== 'Failed to fetch') {
+        setError(
+          typeof e === 'string'
+            ? e
+            : e?.message || 'Unknown Verification Error.',
+        );
+      }
       setStep('pubkey');
     }
   }, []);
@@ -42,7 +49,7 @@ export default function FileDrop(): ReactElement {
         return;
       }
 
-      setError(null);
+      setError('');
 
       const proofContent = await readFileAsync(file);
       const json = safeParseJSON(proofContent);
@@ -113,6 +120,9 @@ export default function FileDrop(): ReactElement {
           }}
         />
       )}
+      {error && (
+        <span className="text-red-500 text-sm w-2/3 text-center">{error}</span>
+      )}
       {(() => {
         switch (step) {
           case 'upload':
@@ -128,6 +138,7 @@ export default function FileDrop(): ReactElement {
               <PubkeyInput
                 className="w-2/3 flex-shrink-0"
                 proof={rawJson}
+                setError={setError}
                 onNext={onPubkeyChange}
               />
             );
@@ -144,7 +155,6 @@ export default function FileDrop(): ReactElement {
             return null;
         }
       })()}
-      {error && <span className="text-red-500 text-sm">{error}</span>}
     </div>
   );
 }

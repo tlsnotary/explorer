@@ -5,6 +5,7 @@ import { Proof } from 'tlsn-js/build/types';
 export function PubkeyInput(props: {
   onNext: (pubkey: string) => Promise<void>;
   proof: Proof;
+  setError?: (msg: string) => void;
   className?: string;
 }) {
   const [error, setError] = useState('');
@@ -41,6 +42,7 @@ export function PubkeyInput(props: {
 
   const onChange = useCallback(
     async (e: ChangeEvent<HTMLTextAreaElement>) => {
+      props.setError && props.setError('');
       setError('');
       const pubkey = e.target.value.replace(/\\n/g, '\n');
       setPubkey(pubkey);
