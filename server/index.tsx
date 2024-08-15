@@ -147,7 +147,42 @@ app.get('/ipfs/:cid', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../ui', 'index.html'));
+  const storeConfig: AppRootState = {
+    notaryKey: { key: '' },
+    proofUpload: {
+      proofs: [],
+      selectedProof: null,
+    },
+    proofs: { ipfs: {} },
+  };
+  const store = configureAppStore(storeConfig);
+  const html = renderToString(
+    <Provider store={store}>
+      <StaticRouter location={req.url}>
+        <App />
+      </StaticRouter>
+    </Provider>,
+  );
+
+  const preloadedState = store.getState();
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>TLSNotary Explorer</title>
+      <script>
+        window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState)};
+      </script>
+      <script defer src="/index.bundle.js"></script>
+    </head>
+    <body>
+      <div id="root">${html}</div>
+      <div id="modal-root"></div>
+    </body>
+    </html>
+  `);
 });
 
 app.listen(port, () => {

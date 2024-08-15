@@ -52,7 +52,11 @@ export default function SharedProof(): ReactElement {
         />
       )}
       {!!proofData.raw && !verifiedProof && (
-        <PubkeyInput className="w-2/3 flex-shrink-0" onNext={onVerify} />
+        <PubkeyInput
+          className="w-2/3 flex-shrink-0"
+          onNext={onVerify}
+          proof={proofData.raw}
+        />
       )}
       {verifiedProof && (
         <ProofViewer

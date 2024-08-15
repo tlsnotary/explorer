@@ -1,8 +1,10 @@
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import classNames from 'classnames';
+import { Proof } from 'tlsn-js/build/types';
 
 export function PubkeyInput(props: {
   onNext: (pubkey: string) => Promise<void>;
+  proof: Proof;
   className?: string;
 }) {
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ export function PubkeyInput(props: {
   const onChange = useCallback(
     async (e: ChangeEvent<HTMLTextAreaElement>) => {
       setError('');
-      const pubkey = e.target.value;
+      const pubkey = e.target.value.replace(/\\n/g, '\n');
       setPubkey(pubkey);
     },
     [pubkey],
@@ -62,11 +64,18 @@ export function PubkeyInput(props: {
 
   return (
     <div className={classNames('flex flex-col gap-2', props.className)}>
-      <div className="font-semibold">Please enter the notary key:</div>
+      <div className="font-semibold text-sm cursor-default">
+        Please enter the notary key for{' '}
+        <span className="text-blue-500 italic font-normal">
+          {props.proof.notaryUrl}
+        </span>
+        :
+      </div>
       <textarea
         className="outline-0 flex-grow w-full bg-slate-100 rouned-xs !border border-slate-300 focus-within:border-slate-500 resize-none p-2 h-[24rem]"
         onChange={onChange}
         placeholder={`-----BEGIN PUBLIC KEY-----\n\n-----END PUBLIC KEY-----`}
+        value={pubkey}
       />
       <div className="flex flex-row justify-end gap-2 items-center">
         {error && <span className="text-red-500 text-sm">{error}</span>}

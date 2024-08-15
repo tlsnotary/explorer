@@ -127,6 +127,7 @@ export default function FileDrop(): ReactElement {
             return (
               <PubkeyInput
                 className="w-2/3 flex-shrink-0"
+                proof={rawJson}
                 onNext={onPubkeyChange}
               />
             );

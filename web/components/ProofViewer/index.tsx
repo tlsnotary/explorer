@@ -56,6 +56,9 @@ export default function ProofViewer(props: {
       )}
       <div className="flex flex-col px-2">
         <div className="flex flex-row gap-2 items-center">
+          <TabLabel onClick={() => setTab('info')} active={tab === 'info'}>
+            Info
+          </TabLabel>
           <TabLabel onClick={() => setTab('sent')} active={tab === 'sent'}>
             Sent
           </TabLabel>
@@ -70,17 +73,27 @@ export default function ProofViewer(props: {
         </div>
       </div>
       <div className="flex flex-col flex-grow px-2">
+        {tab === 'info' && (
+          <div className="w-full bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono">
+            <div>
+              <div>Notary URL:</div>
+              <div>{props.proof.notaryUrl}</div>
+            </div>
+          </div>
+        )}
         {tab === 'sent' && (
           <textarea
             className="w-full resize-none bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono"
             value={props.verifiedProof.sent}
-          ></textarea>
+            readOnly
+          />
         )}
         {tab === 'recv' && (
           <textarea
             className="w-full resize-none bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono"
             value={props.verifiedProof.recv}
-          ></textarea>
+            readOnly
+          />
         )}
       </div>
     </div>

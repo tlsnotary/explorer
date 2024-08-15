@@ -157,12 +157,12 @@ var options = {
         },
       ]
     }),
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, "static", "index.html"),
-      filename: "index.html",
-      chunks: ["index"],
-      cache: false,
-    }),
+    // new HtmlWebpackPlugin({
+    //   template: path.join(__dirname, "static", "index.html"),
+    //   filename: "index.html",
+    //   chunks: ["index"],
+    //   cache: false,
+    // }),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
