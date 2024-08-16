@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import fileUpload from 'express-fileupload';
 import stream from 'stream';
-import path from 'path';
 import { addBytes, getCID } from './services/ipfs';
 import App from '../web/pages/App';
 import { Provider } from 'react-redux';
@@ -12,7 +11,9 @@ import { StaticRouter } from 'react-router-dom/server';
 import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
-import { Proof } from 'tlsn-js/build/types';
+// @ts-ignore
+import { verify as verifyV6 } from '../rs/0.1.0-alpha.6/index.node';
+import { Attestation } from '../web/utils/types/types';
 
 const app = express();
 const port = 3000;
@@ -68,6 +69,13 @@ app.get('/gateway/ipfs/:cid', async (req, res) => {
 app.get('/ipfs/:cid', async (req, res) => {
   // If there is no file from CID or JSON cannot be parsed, redirect to root
   try {
+    const { cid } = req.params;
+    const [, isWasm] = cid.split('.');
+
+    if (isWasm) {
+      return res.redirect(`/${cid}`);
+    }
+
     const storeConfig: AppRootState = {
       notaryKey: { key: '' },
       proofUpload: {
@@ -78,7 +86,7 @@ app.get('/ipfs/:cid', async (req, res) => {
     };
 
     const file = await getCID(req.params.cid);
-    const jsonProof: Proof = JSON.parse(file);
+    const jsonProof: Attestation = JSON.parse(file);
 
     storeConfig.proofs.ipfs[req.params.cid] = {
       raw: jsonProof,
@@ -88,12 +96,19 @@ app.get('/ipfs/:cid', async (req, res) => {
      * Verify the proof if notary url exist
      * redirect to root if verification fails
      */
-    if (jsonProof.notaryUrl) {
-      const proof = await verify(
+    if (!jsonProof.version && jsonProof.notaryUrl) {
+      const proof = await verifyV6(
         file,
         await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
       );
       proof.notaryUrl = jsonProof.notaryUrl;
+      storeConfig.proofs.ipfs[req.params.cid].proof = proof;
+    } else if (jsonProof.version === '1.0') {
+      const proof = await verifyV6(
+        jsonProof.data,
+        await fetchPublicKeyFromNotary(jsonProof.meta.notaryUrl),
+      );
+      proof.notaryUrl = jsonProof.meta.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = proof;
     }
 
@@ -147,7 +162,42 @@ app.get('/ipfs/:cid', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../ui', 'index.html'));
+  const storeConfig: AppRootState = {
+    notaryKey: { key: '' },
+    proofUpload: {
+      proofs: [],
+      selectedProof: null,
+    },
+    proofs: { ipfs: {} },
+  };
+  const store = configureAppStore(storeConfig);
+  const html = renderToString(
+    <Provider store={store}>
+      <StaticRouter location={req.url}>
+        <App />
+      </StaticRouter>
+    </Provider>,
+  );
+
+  const preloadedState = store.getState();
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>TLSNotary Explorer</title>
+      <script>
+        window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState)};
+      </script>
+      <script defer src="/index.bundle.js"></script>
+    </head>
+    <body>
+      <div id="root">${html}</div>
+      <div id="modal-root"></div>
+    </body>
+    </html>
+  `);
 });
 
 app.listen(port, () => {

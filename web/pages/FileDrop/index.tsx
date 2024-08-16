@@ -1,15 +1,15 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { readFileAsync, safeParseJSON } from '../../utils';
+import { readFileAsync, safeParseJSON, verify } from '../../utils';
 import FileUploadInput from '../../components/FileUploadInput';
 import ProofViewer from '../../components/ProofViewer';
-import { Proof as VerifiedProof } from '../../utils/types/types';
+import { Attestation, Proof as VerifiedProof } from '../../utils/types/types';
 import { FileDropdown } from '../../components/FileDropdown';
 import { PubkeyInput } from '../PubkeyInput';
 
 export default function FileDrop(): ReactElement {
   const dispatch = useDispatch();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
   const [verifiedProof, setVerifiedProof] = useState<VerifiedProof | null>(
     null,
   );
@@ -19,13 +19,19 @@ export default function FileDrop(): ReactElement {
   const [pubkey, setPubkey] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const onVerify = useCallback(async (json: any, key = '') => {
-    const { verify } = await import('tlsn-js');
+  const onVerify = useCallback(async (json: Attestation, key = '') => {
     try {
       const resp = await verify(json, key);
       setVerifiedProof(resp);
       setStep('result');
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.message !== 'Failed to fetch') {
+        setError(
+          typeof e === 'string'
+            ? e
+            : e?.message || 'Unknown Verification Error.',
+        );
+      }
       setStep('pubkey');
     }
   }, []);
@@ -42,10 +48,10 @@ export default function FileDrop(): ReactElement {
         return;
       }
 
-      setError(null);
+      setError('');
 
       const proofContent = await readFileAsync(file);
-      const json = safeParseJSON(proofContent);
+      const json: Attestation = safeParseJSON(proofContent);
 
       if (!json) {
         setError(proofContent || 'Invalid proof');
@@ -54,11 +60,11 @@ export default function FileDrop(): ReactElement {
 
       setRawJson(json);
 
-      if (!json?.notaryUrl) {
-        setStep('pubkey');
-        setFile(file);
-        return;
-      }
+      // if (!json?.notaryUrl) {
+      //   setStep('pubkey');
+      //   setFile(file);
+      //   return;
+      // }
 
       try {
         await onVerify(json);
@@ -113,6 +119,9 @@ export default function FileDrop(): ReactElement {
           }}
         />
       )}
+      {error && (
+        <span className="text-red-500 text-sm w-2/3 text-center">{error}</span>
+      )}
       {(() => {
         switch (step) {
           case 'upload':
@@ -127,6 +136,8 @@ export default function FileDrop(): ReactElement {
             return (
               <PubkeyInput
                 className="w-2/3 flex-shrink-0"
+                proof={rawJson}
+                setError={setError}
                 onNext={onPubkeyChange}
               />
             );
@@ -143,7 +154,6 @@ export default function FileDrop(): ReactElement {
             return null;
         }
       })()}
-      {error && <span className="text-red-500 text-sm">{error}</span>}
     </div>
   );
 }

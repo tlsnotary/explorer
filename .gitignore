@@ -4,4 +4,4 @@
 .idea
 build
 .env
-rs/verifier/target
+rs/**/target

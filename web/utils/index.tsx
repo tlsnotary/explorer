@@ -1,4 +1,5 @@
 import React, { ReactElement, useRef } from 'react';
+import { Attestation, Proof } from './types/types';
 
 export const readFileAsync = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -81,4 +82,69 @@ export function download(filename: string, content: string) {
   element.click();
 
   document.body.removeChild(element);
+}
+
+let tlsnInitPromise: Promise<any> | null = null;
+async function initTlsnJs() {
+  if (tlsnInitPromise) return tlsnInitPromise;
+  const { promise, resolve } = defer();
+  tlsnInitPromise = promise;
+
+  const { default: init } = await import('tlsn-js');
+  await init();
+  resolve();
+}
+
+export async function verify(
+  attestation: Attestation,
+  pubKey: string,
+): Promise<Proof> {
+  let key = pubKey;
+  const { NotaryServer } = await import('tlsn-js');
+
+  switch (attestation.version) {
+    case undefined: {
+      const { verify } = await import('tlsn-js-v5');
+      key = key || (await NotaryServer.from(attestation.notaryUrl).publicKey());
+      return await verify(attestation, key);
+    }
+    case '1.0': {
+      const { TlsProof } = await import('tlsn-js');
+      console.log(Buffer.from(attestation.data, 'hex').toString('binary'));
+      await initTlsnJs();
+      key =
+        key ||
+        (await NotaryServer.from(attestation.meta.notaryUrl).publicKey());
+      const tlsProof = new TlsProof(attestation.data);
+      const data = await tlsProof.verify({
+        typ: 'P256',
+        key: key,
+      });
+      return {
+        sent: data.sent,
+        recv: data.recv,
+        time: data.time,
+        notaryUrl: attestation.meta.notaryUrl,
+      };
+    }
+  }
+
+  throw new Error('Invalid Proof');
+}
+
+function defer(): {
+  promise: Promise<any>;
+  resolve: (args?: any) => any;
+  reject: (args?: any) => any;
+} {
+  let resolve: any, reject: any;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return {
+    promise,
+    resolve: resolve as (args?: any) => any,
+    reject: reject as (args?: any) => any,
+  };
 }
