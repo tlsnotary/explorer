@@ -11,7 +11,9 @@ import { StaticRouter } from 'react-router-dom/server';
 import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
-import { Proof } from 'tlsn-js-v5/build/types';
+// @ts-ignore
+import { verify as verifyV6 } from '../rs/0.1.0-alpha.6/index.node';
+import { Attestation } from '../web/utils/types/types';
 
 const app = express();
 const port = 3000;
@@ -84,7 +86,7 @@ app.get('/ipfs/:cid', async (req, res) => {
     };
 
     const file = await getCID(req.params.cid);
-    const jsonProof: Proof = JSON.parse(file);
+    const jsonProof: Attestation = JSON.parse(file);
 
     storeConfig.proofs.ipfs[req.params.cid] = {
       raw: jsonProof,
@@ -94,12 +96,19 @@ app.get('/ipfs/:cid', async (req, res) => {
      * Verify the proof if notary url exist
      * redirect to root if verification fails
      */
-    if (jsonProof.notaryUrl) {
-      const proof = await verify(
+    if (!jsonProof.version && jsonProof.notaryUrl) {
+      const proof = await verifyV6(
         file,
         await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
       );
       proof.notaryUrl = jsonProof.notaryUrl;
+      storeConfig.proofs.ipfs[req.params.cid].proof = proof;
+    } else if (jsonProof.version === '1.0') {
+      const proof = await verifyV6(
+        jsonProof.data,
+        await fetchPublicKeyFromNotary(jsonProof.meta.notaryUrl),
+      );
+      proof.notaryUrl = jsonProof.meta.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = proof;
     }
 

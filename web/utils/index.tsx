@@ -110,6 +110,7 @@ export async function verify(
     }
     case '1.0': {
       const { TlsProof } = await import('tlsn-js');
+      console.log(Buffer.from(attestation.data, 'hex').toString('binary'));
       await initTlsnJs();
       key =
         key ||
