@@ -9,6 +9,7 @@ COPY . .
 RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
 RUN npm i
 RUN npm i --prefix rs/verifier/
+RUN npm i --prefix rs/0.1.0-alpha.6/
 RUN npm run build
 
 # Create image for the app by copying build artifacts from builder

@@ -97,7 +97,7 @@ app.get('/ipfs/:cid', async (req, res) => {
      * redirect to root if verification fails
      */
     if (!jsonProof.version && jsonProof.notaryUrl) {
-      const proof = await verifyV6(
+      const proof = await verify(
         file,
         await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
       );
