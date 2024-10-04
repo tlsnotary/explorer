@@ -13,7 +13,7 @@ export type AttestationV0 = {
 };
 
 export type AttestationV1 = {
-  version: '1.0';
+  version: '0.1.0-alpha.7' | '0.1.0-alpha.6';
   data: string;
   meta: {
     notaryUrl: string;

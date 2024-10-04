@@ -70,7 +70,7 @@ export function PubkeyInput(props: {
       <div className="font-semibold text-sm cursor-default">
         Please enter the notary key for{' '}
         <span className="text-blue-500 italic font-normal">
-          {proof.version === '1.0' ? proof.meta.notaryUrl : proof.notaryUrl}
+          {proof.version === '0.1.0-alpha.7' ? proof.meta.notaryUrl : <></>}
         </span>
         :
       </div>

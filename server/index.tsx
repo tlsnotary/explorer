@@ -103,7 +103,7 @@ app.get('/ipfs/:cid', async (req, res) => {
       );
       proof.notaryUrl = jsonProof.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = proof;
-    } else if (jsonProof.version === '1.0') {
+    } else if (jsonProof.version === '0.1.0-alpha.7') {
       const proof = await verifyV6(
         jsonProof.data,
         await fetchPublicKeyFromNotary(jsonProof.meta.notaryUrl),

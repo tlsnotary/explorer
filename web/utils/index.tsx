@@ -101,29 +101,32 @@ export async function verify(
 ): Promise<Proof> {
   let key = pubKey;
   const { NotaryServer } = await import('tlsn-js');
-
+  console.log(attestation.version)
   switch (attestation.version) {
     case undefined: {
       const { verify } = await import('tlsn-js-v5');
       key = key || (await NotaryServer.from(attestation.notaryUrl).publicKey());
       return await verify(attestation, key);
     }
-    case '1.0': {
-      const { TlsProof } = await import('tlsn-js');
+    case '0.1.0-alpha.7': {
+      const { Presentation, Transcript } = await import('tlsn-js');
       console.log(Buffer.from(attestation.data, 'hex').toString('binary'));
       await initTlsnJs();
       key =
         key ||
         (await NotaryServer.from(attestation.meta.notaryUrl).publicKey());
-      const tlsProof = new TlsProof(attestation.data);
-      const data = await tlsProof.verify({
-        typ: 'P256',
-        key: key,
-      });
+      const tlsProof = new Presentation(attestation.data);
+      console.log(tlsProof);
+      const data = await tlsProof.verify();
+      const transcript = new Transcript({
+        sent: data.transcript.sent,
+        recv: data.transcript.recv,
+      })
+      const vk = tlsProof.verifyingKey();
       return {
-        sent: data.sent,
-        recv: data.recv,
-        time: data.time,
+        sent: transcript.sent(),
+        recv: transcript.recv(),
+        time: data.connection_info.time,
         notaryUrl: attestation.meta.notaryUrl,
       };
     }

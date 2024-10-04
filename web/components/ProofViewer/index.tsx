@@ -77,9 +77,9 @@ export default function ProofViewer(props: {
             <div>
               <div>Notary URL:</div>
               <div>
-                {props.proof.version === '1.0'
+                {props.proof.version === '0.1.0-alpha.7'
                   ? props.proof.meta.notaryUrl
-                  : props.proof.notaryUrl}
+                  : <></>}
               </div>
             </div>
           </div>
