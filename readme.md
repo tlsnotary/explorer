@@ -6,7 +6,7 @@
 
 # TLSN Explorer
 
-TLSN Explorer is server that will handle the social discovery and visualization of proofs generated from the TLS Notary protocol.
+TLSN Explorer is server that will handle the social discovery and visualization of proofs generated from the TLSNotary protocol.
 
 ## License
 This repository is licensed under either of
