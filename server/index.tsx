@@ -13,6 +13,7 @@ import configureAppStore, { AppRootState } from '../web/store';
 import { verify } from '../rs/verifier/index.node';
 // @ts-ignore
 import { verify as verifyV6 } from '../rs/0.1.0-alpha.6/index.node';
+import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
 
 const app = express();
@@ -104,7 +105,7 @@ app.get('/ipfs/:cid', async (req, res) => {
       proof.notaryUrl = jsonProof.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = proof;
     } else if (jsonProof.version === '0.1.0-alpha.7') {
-      const proof = await verifyV6(
+      const proof = await verifyV7(
         jsonProof.data,
         await fetchPublicKeyFromNotary(jsonProof.meta.notaryUrl),
       );
