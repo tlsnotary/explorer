@@ -79,15 +79,20 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::Value;
+    use serde::Deserialize;
+
+    #[derive(Deserialize, Debug)]
+    struct Presentation {
+        version: String,
+        data: String,
+    }
 
     /// get example presentation from example.com for testing
     fn example_presentation() -> String {
         let example = include_str!("example.json");
-        let parsed: Value = serde_json::from_str(&example).unwrap();
-        assert_eq!("0.1.0-alpha.7", parsed.get("version").unwrap());
-
-        parsed.get("data").unwrap().as_str().unwrap().to_string()
+        let presentation: Presentation = serde_json::from_str(&example).unwrap();
+        assert_eq!("0.1.0-alpha.7", presentation.version);
+        presentation.data
     }
 
     #[test]
