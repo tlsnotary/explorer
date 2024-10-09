@@ -12,7 +12,6 @@ import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
 // @ts-ignore
-import { verify as verifyV6 } from '../rs/0.1.0-alpha.6/index.node';
 import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
 
@@ -206,11 +205,15 @@ app.listen(port, () => {
 });
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
-  const res = await fetch(
-    notaryUrl.replace('localhost', '127.0.0.1') + '/info',
-  );
-  const json: any = await res.json();
+  let host;
 
+  let httpUrl = notaryUrl.replace(/^ws:/, 'http:').replace(/^wss:/, 'https:');
+  let hostMatch = httpUrl.match(/^(https?:\/\/[^\/]+)/);
+  if (hostMatch) {
+    host = hostMatch[1];
+  }
+  const res = await fetch(host + '/info');
+  const json: any = await res.json();
   if (!json.publicKey) throw new Error('invalid response');
   return json.publicKey;
 }
