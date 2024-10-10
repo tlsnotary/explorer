@@ -151,14 +151,6 @@ export function convertNotaryWsToHttp(notaryWs: string) {
   const p = protocol === 'wss:' ? 'https:' : 'http:';
   const pt = port ? `:${port}` : '';
   const path = pathname === '/' ? '' : pathname.replace('/notarize', '');
-  console.log(
-    path,
-    pathname,
-    port,
-    pt,
-    new URL(notaryWs),
-    p + '//' + hostname + pt + path,
-  );
   return p + '//' + hostname + pt + path;
 }
 
