@@ -4,7 +4,7 @@ import type { Proof } from 'tlsn-js-v5/build/types';
 import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
 import { EXPLORER_URL } from '../utils/constants';
-import { Attestation } from '../utils/types/types';
+import { Attestation, AttestedData } from '../utils/types/types';
 import { verify } from '../utils';
 
 enum ActionType {
@@ -18,19 +18,14 @@ export type Action<payload = any> = {
   meta?: any;
 };
 
-type ProofData = {
+type AttestationData = {
   raw: Attestation;
-  proof?: {
-    time: number;
-    sent: string;
-    recv: string;
-    notaryUrl: string;
-  };
+  proof?: AttestedData;
 };
 
 type State = {
   ipfs: {
-    [cid: string]: ProofData;
+    [cid: string]: AttestationData;
   };
 };
 
@@ -66,7 +61,7 @@ export const fetchProofFromIPFS =
   };
 
 export const setIPFSProof = (
-  payload: ProofData & {
+  payload: AttestationData & {
     cid: string;
   },
 ) => ({
@@ -76,16 +71,11 @@ export const setIPFSProof = (
 
 export default function proofs(
   state = initState,
-  action: Action<{
-    cid: string;
-    raw: Proof;
-    proof: {
-      time: number;
-      sent: string;
-      recv: string;
-      notaryUrl: string;
-    };
-  }>,
+  action: Action<
+    AttestationData & {
+      cid: string;
+    }
+  >,
 ): State {
   switch (action.type) {
     case ActionType.SetIPFSProof:
@@ -104,7 +94,7 @@ export default function proofs(
   }
 }
 
-export const useIPFSProof = (cid?: string): ProofData | null => {
+export const useIPFSProof = (cid?: string): AttestationData | null => {
   return useSelector((state: AppRootState) => {
     if (!cid) return null;
     return state.proofs.ipfs[cid] || null;

@@ -1,5 +1,5 @@
 import { AppRootState } from '.';
-import type { Proof } from '../utils/types/types';
+import type { AttestedData } from '../utils/types/types';
 import { useSelector } from 'react-redux';
 
 export enum ActionType {
@@ -8,7 +8,7 @@ export enum ActionType {
   UploadFileSuccess = 'proofupload/uploadFileSuccess',
 }
 
-export const uploadFile = (fileName: string, proof: Proof) => ({
+export const uploadFile = (fileName: string, proof: AttestedData) => ({
   type: ActionType.AddFile,
   payload: { fileName, proof },
 });
@@ -31,8 +31,12 @@ export type Action<payload = any> = {
 };
 
 type State = {
-  proofs: { fileName: string; proof: Proof }[];
-  selectedProof?: { fileName: string; proof: Proof; ipfsCID?: string } | null;
+  proofs: { fileName: string; proof: AttestedData }[];
+  selectedProof?: {
+    fileName: string;
+    proof: AttestedData;
+    ipfsCID?: string;
+  } | null;
 };
 
 const initState: State = {

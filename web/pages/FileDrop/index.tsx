@@ -3,7 +3,10 @@ import { useDispatch } from 'react-redux';
 import { readFileAsync, safeParseJSON, verify } from '../../utils';
 import FileUploadInput from '../../components/FileUploadInput';
 import ProofViewer from '../../components/ProofViewer';
-import { Attestation, Proof as VerifiedProof } from '../../utils/types/types';
+import {
+  Attestation,
+  AttestedData as VerifiedProof,
+} from '../../utils/types/types';
 import { FileDropdown } from '../../components/FileDropdown';
 import { PubkeyInput } from '../PubkeyInput';
 
@@ -25,6 +28,7 @@ export default function FileDrop(): ReactElement {
       setVerifiedProof(resp);
       setStep('result');
     } catch (e: any) {
+      console.error(e);
       if (e?.message !== 'Failed to fetch') {
         setError(
           typeof e === 'string'
