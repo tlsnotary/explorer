@@ -130,9 +130,6 @@ export async function verify(
       const notaryUrl = convertNotaryWsToHttp(attestation.meta.notaryUrl);
       const publicKey = await new NotaryServer(notaryUrl).publicKey();
 
-      if (verifyingKey !== publicKey)
-        throw new Error(`Notary key doesn't match verifying key`);
-
       return {
         version: '0.1.0-alpha.7',
         sent: transcript.sent(),
@@ -150,10 +147,11 @@ export async function verify(
 }
 
 export function convertNotaryWsToHttp(notaryWs: string) {
-  const { protocol, pathname, hostname } = new URL(notaryWs);
-  const p = protocol === 'wss:' ? 'https:' : 'http';
+  const { protocol, pathname, hostname, port } = new URL(notaryWs);
+  const p = protocol === 'wss:' ? 'https:' : 'http:';
+  const pt = port ? `:${port}` : '';
   const path = pathname === '/' ? '' : pathname.replace('/notarize', '');
-  return p + '//' + hostname + path;
+  return p + '//' + hostname + pt + path;
 }
 
 function defer(): {
