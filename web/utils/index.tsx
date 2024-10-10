@@ -151,7 +151,8 @@ export function convertNotaryWsToHttp(notaryWs: string) {
   const p = protocol === 'wss:' ? 'https:' : 'http:';
   const pt = port ? `:${port}` : '';
   const path = pathname === '/' ? '' : pathname.replace('/notarize', '');
-  return p + '//' + hostname + pt + path;
+  const h = hostname === 'localhost' ? '127.0.0.1' : hostname;
+  return p + '//' + h + pt + path;
 }
 
 function defer(): {
