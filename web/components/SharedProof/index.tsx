@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import ProofViewer from '../ProofViewer';
 import { FileDropdown } from '../FileDropdown';
 import { PubkeyInput } from '../../pages/PubkeyInput';
-import { Proof } from '../../utils/types/types';
+import { AttestedData } from '../../utils/types/types';
 import { File } from '@web-std/file';
 import { verify } from '../../utils';
 
@@ -18,7 +18,7 @@ export default function SharedProof(): ReactElement {
   const file = new File([JSON.stringify(proofData?.raw)], `${cid}.json`, {
     type: 'text/plain',
   });
-  const [verifiedProof, setVerifiedProof] = useState<Proof | null>(
+  const [verifiedProof, setVerifiedProof] = useState<AttestedData | null>(
     proofData?.proof || null,
   );
 

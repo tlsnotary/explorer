@@ -1,5 +1,5 @@
 import React, { ReactElement, useRef } from 'react';
-import { Attestation, Proof } from './types/types';
+import { Attestation, AttestedData } from './types/types';
 
 export const readFileAsync = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -98,38 +98,62 @@ async function initTlsnJs() {
 export async function verify(
   attestation: Attestation,
   pubKey: string,
-): Promise<Proof> {
+): Promise<AttestedData> {
   let key = pubKey;
   const { NotaryServer } = await import('tlsn-js');
+  await initTlsnJs();
 
   switch (attestation.version) {
     case undefined: {
       const { verify } = await import('tlsn-js-v5');
-      key = key || (await NotaryServer.from(attestation.notaryUrl).publicKey());
-      return await verify(attestation, key);
-    }
-    case '1.0': {
-      const { TlsProof } = await import('tlsn-js');
-      console.log(Buffer.from(attestation.data, 'hex').toString('binary'));
-      await initTlsnJs();
       key =
         key ||
-        (await NotaryServer.from(attestation.meta.notaryUrl).publicKey());
-      const tlsProof = new TlsProof(attestation.data);
-      const data = await tlsProof.verify({
-        typ: 'P256',
-        key: key,
-      });
+        (await NotaryServer.from(attestation.notaryUrl).publicKey('pem'));
+      const data = await verify(attestation, key);
       return {
-        sent: data.sent,
-        recv: data.recv,
-        time: data.time,
-        notaryUrl: attestation.meta.notaryUrl,
+        ...data,
+        version: '0.1.0-alpha.5',
+        notaryUrl: attestation.notaryUrl,
+        notaryKey: key,
+      };
+    }
+    case '0.1.0-alpha.7': {
+      const { Presentation, Transcript } = await import('tlsn-js');
+      const tlsProof = new Presentation(attestation.data);
+      const data = await tlsProof.verify();
+      const transcript = new Transcript({
+        sent: data.transcript.sent,
+        recv: data.transcript.recv,
+      });
+      const vk = await tlsProof.verifyingKey();
+      const verifyingKey = Buffer.from(vk.data).toString('hex');
+      const notaryUrl = convertNotaryWsToHttp(attestation.meta.notaryUrl);
+      const publicKey = await new NotaryServer(notaryUrl).publicKey();
+
+      if (verifyingKey !== publicKey)
+        throw new Error(`Notary key doesn't match verifying key`);
+
+      return {
+        version: '0.1.0-alpha.7',
+        sent: transcript.sent(),
+        recv: transcript.recv(),
+        time: data.connection_info.time,
+        notaryUrl: notaryUrl,
+        notaryKey: publicKey,
+        websocketProxyUrl: attestation.meta.websocketProxyUrl,
+        verifierKey: verifyingKey,
       };
     }
   }
 
   throw new Error('Invalid Proof');
+}
+
+export function convertNotaryWsToHttp(notaryWs: string) {
+  const { protocol, pathname, hostname } = new URL(notaryWs);
+  const p = protocol === 'wss:' ? 'https:' : 'http';
+  const path = pathname === '/' ? '' : pathname.replace('/notarize', '');
+  return p + '//' + hostname + path;
 }
 
 function defer(): {

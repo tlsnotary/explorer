@@ -1,8 +1,12 @@
-export interface Proof {
+export interface AttestedData {
+  version: '0.1.0-alpha.7' | '0.1.0-alpha.5';
   time: number;
   sent: string;
   recv: string;
   notaryUrl: string;
+  notaryKey: string;
+  websocketProxyUrl?: string;
+  verifierKey?: string;
 }
 
 export type AttestationV0 = {
@@ -13,7 +17,7 @@ export type AttestationV0 = {
 };
 
 export type AttestationV1 = {
-  version: '1.0';
+  version: '0.1.0-alpha.7';
   data: string;
   meta: {
     notaryUrl: string;

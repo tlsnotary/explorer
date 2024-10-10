@@ -7,7 +7,10 @@ import React, {
 } from 'react';
 import c from 'classnames';
 import classNames from 'classnames';
-import { Attestation, Proof as VerifiedProof } from '../../utils/types/types';
+import {
+  Attestation,
+  AttestedData as VerifiedProof,
+} from '../../utils/types/types';
 import Modal, { ModalContent, ModalFooter, ModalHeader } from '../Modal';
 import Icon from '../Icon';
 import { useDispatch } from 'react-redux';
@@ -55,14 +58,14 @@ export default function ProofViewer(props: {
       )}
       <div className="flex flex-col px-2">
         <div className="flex flex-row gap-2 items-center">
-          <TabLabel onClick={() => setTab('info')} active={tab === 'info'}>
-            Info
-          </TabLabel>
           <TabLabel onClick={() => setTab('sent')} active={tab === 'sent'}>
             Sent
           </TabLabel>
           <TabLabel onClick={() => setTab('recv')} active={tab === 'recv'}>
             Recv
+          </TabLabel>
+          <TabLabel onClick={() => setTab('info')} active={tab === 'info'}>
+            Metadata
           </TabLabel>
           <div className="flex flex-row flex-grow items-center justify-end">
             <button className="button" onClick={onClickShare}>
@@ -73,15 +76,30 @@ export default function ProofViewer(props: {
       </div>
       <div className="flex flex-col flex-grow px-2">
         {tab === 'info' && (
-          <div className="w-full bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono">
-            <div>
-              <div>Notary URL:</div>
-              <div>
-                {props.proof.version === '1.0'
-                  ? props.proof.meta.notaryUrl
-                  : props.proof.notaryUrl}
-              </div>
-            </div>
+          <div className="flex flex-col w-full bg-slate-100 text-slate-800 border p-2 text-xs break-all h-full outline-none font-mono gap-4">
+            <MetadataRow label="Version" value={props.verifiedProof.version} />
+            <MetadataRow
+              label="Notary URL"
+              value={props.verifiedProof.notaryUrl}
+            />
+            {props.verifiedProof.websocketProxyUrl && (
+              <MetadataRow
+                label="Websocket Proxy URL"
+                value={props.verifiedProof.websocketProxyUrl}
+              />
+            )}
+            {props.verifiedProof.verifierKey && (
+              <MetadataRow
+                label="Verifying Key"
+                value={props.verifiedProof.verifierKey}
+              />
+            )}
+            {props.verifiedProof.notaryKey && (
+              <MetadataRow
+                label="Notary Key"
+                value={props.verifiedProof.notaryKey}
+              />
+            )}
           </div>
         )}
         {tab === 'sent' && (
@@ -99,6 +117,15 @@ export default function ProofViewer(props: {
           />
         )}
       </div>
+    </div>
+  );
+}
+
+function MetadataRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div>{label}:</div>
+      <div className="text-sm font-semibold whitespace-pre-wrap">{value}</div>
     </div>
   );
 }

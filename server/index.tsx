@@ -12,8 +12,9 @@ import configureAppStore, { AppRootState } from '../web/store';
 // @ts-ignore
 import { verify } from '../rs/verifier/index.node';
 // @ts-ignore
-import { verify as verifyV6 } from '../rs/0.1.0-alpha.6/index.node';
+import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
+import { convertNotaryWsToHttp } from '../web/utils';
 
 const app = express();
 const port = 3000;
@@ -97,19 +98,37 @@ app.get('/ipfs/:cid', async (req, res) => {
      * redirect to root if verification fails
      */
     if (!jsonProof.version && jsonProof.notaryUrl) {
-      const proof = await verify(
-        file,
-        await fetchPublicKeyFromNotary(jsonProof.notaryUrl),
-      );
+      const notaryPem = await fetchPublicKeyFromNotary(jsonProof.notaryUrl);
+      const proof = await verify(file, notaryPem);
       proof.notaryUrl = jsonProof.notaryUrl;
-      storeConfig.proofs.ipfs[req.params.cid].proof = proof;
-    } else if (jsonProof.version === '1.0') {
-      const proof = await verifyV6(
-        jsonProof.data,
-        await fetchPublicKeyFromNotary(jsonProof.meta.notaryUrl),
-      );
+      storeConfig.proofs.ipfs[req.params.cid].proof = {
+        ...proof,
+        version: '0.1.0-alpha.5',
+        notaryUrl: jsonProof.notaryUrl,
+        notaryKey: notaryPem,
+      };
+    } else if (jsonProof.version === '0.1.0-alpha.7') {
+      const notaryUrl = convertNotaryWsToHttp(jsonProof.meta.notaryUrl);
+      const notaryPem = await fetchPublicKeyFromNotary(notaryUrl);
+      const proof = await verifyV7(jsonProof.data, notaryPem);
       proof.notaryUrl = jsonProof.meta.notaryUrl;
-      storeConfig.proofs.ipfs[req.params.cid].proof = proof;
+      storeConfig.proofs.ipfs[req.params.cid].proof = {
+        version: '0.1.0-alpha.7',
+        time: proof.time,
+        sent: proof.sent,
+        recv: proof.recv,
+        notaryUrl: notaryUrl,
+        websocketProxyUrl: jsonProof.meta.websocketProxyUrl,
+        notaryKey: Buffer.from(
+          notaryPem
+            .replace('-----BEGIN PUBLIC KEY-----', '')
+            .replace('-----END PUBLIC KEY-----', '')
+            .replace(/\n/g, ''),
+          'base64',
+        )
+          .slice(23)
+          .toString('hex'),
+      };
     }
 
     const store = configureAppStore(storeConfig);
@@ -205,11 +224,8 @@ app.listen(port, () => {
 });
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
-  const res = await fetch(
-    notaryUrl.replace('localhost', '127.0.0.1') + '/info',
-  );
+  const res = await fetch(notaryUrl + '/info');
   const json: any = await res.json();
-
   if (!json.publicKey) throw new Error('invalid response');
   return json.publicKey;
 }
