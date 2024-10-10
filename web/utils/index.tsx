@@ -128,7 +128,9 @@ export async function verify(
       const vk = await tlsProof.verifyingKey();
       const verifyingKey = Buffer.from(vk.data).toString('hex');
       const notaryUrl = convertNotaryWsToHttp(attestation.meta.notaryUrl);
-      const publicKey = await new NotaryServer(notaryUrl).publicKey();
+      const publicKey = await new NotaryServer(notaryUrl)
+        .publicKey()
+        .catch(() => '');
 
       return {
         version: '0.1.0-alpha.7',
