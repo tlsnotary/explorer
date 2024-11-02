@@ -20,9 +20,11 @@ import { createServer } from 'http';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import crypto from 'crypto';
 import qs from 'qs';
+import { Mutex } from 'async-mutex';
+const mutex = new Mutex();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -242,20 +244,21 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   console.log('New Connection');
   // add this client to the clients array
 
-  let id = 0;
   const query = qs.parse((request.url || '').replace(/\/\?/g, ''));
   const clientId = (query?.clientId as string) || crypto.randomUUID();
   clients.set(clientId, client);
   console.log(`New Connection - ${clientId}`);
 
-  client.send(
-    Buffer.from(
-      JSON.stringify({
-        method: 'client_connect',
-        params: { clientId, id: id++ },
-      }),
-    ),
-  );
+  if (!clientId.includes(':proof')) {
+    client.send(
+      Buffer.from(
+        JSON.stringify({
+          method: 'client_connect',
+          params: { clientId },
+        }),
+      ),
+    );
+  }
 
   // set up client event listeners:
   client.on('message', onClientMessage);
@@ -266,102 +269,85 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     console.log(`Connection closed - ${clientId}`);
   }
 
-  function onClientMessage(rawData: RawData) {
+  async function onClientMessage(rawData: RawData) {
     try {
       const msg = safeParseJSON(rawData.toString());
 
-      console.log(`got msg from ${clientId}: `, msg);
+      // console.log(`got msg from ${clientId}: `, msg);
 
       if (!msg) {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
-
-        if (pairedClientId) {
-          const target = clients.get(pairedClientId + ':proof');
-          //@ts-ignore
-          console.log('p2p: ', rawData.length);
-          target!.send(rawData);
-        }
+        // @ts-ignore
+        console.log('p2p: ', rawData.length);
+        await send(pairedClientId + ':proof', rawData);
 
         return;
       }
 
+      const { to } = msg.params;
+
+      console.log(msg.method);
+
       switch (msg.method) {
-        case 'chat': {
-          const { from, to, text, id } = msg.params;
-          const target = clients.get(to);
-          if (target) {
-            target.send(rawData);
-          } else {
-            client.send(
-              Buffer.from(
-                JSON.stringify({
-                  id,
-                  error: {
-                    message: `client "${to}" does not exist`,
-                  },
-                }),
-              ),
-            );
+        case 'request_proof':
+          await send(to, rawData);
+          break;
+        case 'pair_request':
+          if (await send(to, rawData)) {
+            await send(clientId, pairRequestSent(to));
           }
           break;
-        }
-        case 'request_proof': {
-          const { from, to, plugin, id } = msg.params;
-          const target = clients.get(to);
-          if (target) {
-            target.send(rawData);
-          } else {
-            client.send(Buffer.from(JSON.stringify({
-              id,
-              error: {
-                message: `client "${to}" does not exist`,
-              }
-            })))
+        case 'pair_request_cancel':
+          if (await send(to, rawData)) {
+            await send(clientId, pairRequestCancelled(to));
           }
           break;
-        }
-        case 'pair_request': {
-          const { to, id } = msg.params;
-          const target = clients.get(to);
-          if (target) {
+        case 'pair_request_reject':
+          if (await send(to, rawData)) {
+            await send(clientId, pairRequestRejected(to));
+          }
+          break;
+        case 'pair_request_accept': {
+          if (await send(to, rawData)) {
+            pairs.set(to, clientId);
             pairs.set(clientId, to);
-            target.send(rawData);
-          } else {
-            client.send(
-              Buffer.from(
-                JSON.stringify({
-                  id,
-                  error: {
-                    message: `client "${to}" does not exist`,
-                  },
-                }),
-              ),
-            );
+            await send(clientId, pairRequestSuccess(to));
           }
           break;
         }
-        case 'pair_request_success': {
-          const { to, id } = msg.params;
-          const target = clients.get(to);
-          if (target) {
-            pairs.set(clientId, to);
-            target.send(rawData);
-          } else {
-            client.send(
-              Buffer.from(
-                JSON.stringify({
-                  id,
-                  error: {
-                    message: `client "${to}" does not exist`,
-                  },
-                }),
-              ),
-            );
+        case 'request_proof_by_hash': {
+          const { pluginHash } = msg.params;
+          if (await send(to, rawData)) {
+            await send(clientId, proofRequestReceived(pluginHash));
           }
           break;
         }
+        case 'proof_request_cancel': {
+          const { pluginHash } = msg.params;
+          if (await send(to, rawData)) {
+            await send(clientId, proofRequestCancelled(pluginHash));
+          }
+          break;
+        }
+        case 'proof_request_reject': {
+          const { pluginHash } = msg.params;
+          if (await send(to, rawData)) {
+            await send(clientId, proofRequestRejected(pluginHash));
+          }
+          break;
+        }
+        case 'proof_request_received':
+        case 'proof_request_accept':
+        case 'verifier_started':
+        case 'prover_setup':
+        case 'prover_started':
+        case 'proof_request_start':
+          await send(to, rawData);
+          break;
         default:
+          // send(to, rawData);
+          console.log('unknown msg', msg);
           break;
       }
     } catch (e) {
@@ -373,7 +359,102 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   function broadcast(data: string) {
     clients.forEach((c) => c.send(data));
   }
+
+  async function send(clientId: string, data: RawData) {
+    return mutex.runExclusive(async () => {
+      const res = await new Promise((resolve) => {
+        const target = clients.get(clientId);
+
+        if (!target) {
+          client.send(clientNotFoundError(clientId), () => {
+            resolve(false);
+          });
+        } else {
+          target.send(data, (err) => {
+            resolve(!err);
+          });
+        }
+      });
+
+      return res;
+    });
+  }
 });
+
+function clientNotFoundError(clientId: string) {
+  return bufferify({
+    error: {
+      message: `client "${clientId}" does not exist`,
+    },
+  });
+}
+
+function pairRequestSuccess(pairId: string) {
+  return bufferify({
+    method: 'pair_request_success',
+    params: {
+      pairId,
+    },
+  });
+}
+
+function pairRequestSent(pairId: string) {
+  return bufferify({
+    method: 'pair_request_sent',
+    params: {
+      pairId,
+    },
+  });
+}
+
+function pairRequestCancelled(pairId: string) {
+  return bufferify({
+    method: 'pair_request_cancelled',
+    params: {
+      pairId,
+    },
+  });
+}
+
+function pairRequestRejected(pairId: string) {
+  return bufferify({
+    method: 'pair_request_rejected',
+    params: {
+      pairId,
+    },
+  });
+}
+
+function proofRequestReceived(pluginHash: string) {
+  return bufferify({
+    method: 'proof_request_received',
+    params: {
+      pluginHash,
+    },
+  });
+}
+
+function proofRequestCancelled(pluginHash: string) {
+  return bufferify({
+    method: 'proof_request_cancelled',
+    params: {
+      pluginHash,
+    },
+  });
+}
+
+function proofRequestRejected(pluginHash: string) {
+  return bufferify({
+    method: 'proof_request_rejected',
+    params: {
+      pluginHash,
+    },
+  });
+}
+
+function bufferify(data: any) {
+  return Buffer.from(JSON.stringify(data));
+}
 
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
   const res = await fetch(notaryUrl + '/info');
