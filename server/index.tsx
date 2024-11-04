@@ -236,8 +236,6 @@ server.listen(port, () => {
 
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const pairs: Map<string, string> = new Map<string, string>();
-pairs.set('alice', 'bob');
-pairs.set('bob', 'alice');
 
 wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   // you have a new client
@@ -251,12 +249,10 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
 
   if (!clientId.includes(':proof')) {
     client.send(
-      Buffer.from(
-        JSON.stringify({
-          method: 'client_connect',
-          params: { clientId },
-        }),
-      ),
+      bufferify({
+        method: 'client_connect',
+        params: { clientId },
+      }),
     );
   }
 
@@ -266,6 +262,22 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
 
   function endClient() {
     clients.delete(clientId);
+
+    if (!clientId.includes(':proof')) {
+      const pair = pairs.get(clientId);
+      if (pair) {
+        pairs.delete(pair);
+        pairs.delete(clientId);
+        send(
+          pair,
+          bufferify({
+            method: 'pair_disconnect',
+            params: { pairId: clientId },
+          }),
+        );
+      }
+    }
+
     console.log(`Connection closed - ${clientId}`);
   }
 
@@ -273,80 +285,47 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     try {
       const msg = safeParseJSON(rawData.toString());
 
-      // console.log(`got msg from ${clientId}: `, msg);
-
       if (!msg) {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
-        // @ts-ignore
-        console.log('p2p: ', rawData.length);
-        await send(pairedClientId + ':proof', rawData);
-
+        send(pairedClientId + ':proof', rawData);
         return;
       }
 
       const { to } = msg.params;
 
-      console.log(msg.method);
-
       switch (msg.method) {
-        case 'request_proof':
-          await send(to, rawData);
-          break;
         case 'pair_request':
-          if (await send(to, rawData)) {
-            await send(clientId, pairRequestSent(to));
-          }
-          break;
+        case 'pair_request_sent':
         case 'pair_request_cancel':
-          if (await send(to, rawData)) {
-            await send(clientId, pairRequestCancelled(to));
-          }
-          break;
+        case 'pair_request_cancelled':
         case 'pair_request_reject':
-          if (await send(to, rawData)) {
-            await send(clientId, pairRequestRejected(to));
-          }
-          break;
-        case 'pair_request_accept': {
-          if (await send(to, rawData)) {
-            pairs.set(to, clientId);
-            pairs.set(clientId, to);
-            await send(clientId, pairRequestSuccess(to));
-          }
-          break;
-        }
-        case 'request_proof_by_hash': {
-          const { pluginHash } = msg.params;
-          if (await send(to, rawData)) {
-            await send(clientId, proofRequestReceived(pluginHash));
-          }
-          break;
-        }
-        case 'proof_request_cancel': {
-          const { pluginHash } = msg.params;
-          if (await send(to, rawData)) {
-            await send(clientId, proofRequestCancelled(pluginHash));
-          }
-          break;
-        }
-        case 'proof_request_reject': {
-          const { pluginHash } = msg.params;
-          if (await send(to, rawData)) {
-            await send(clientId, proofRequestRejected(pluginHash));
-          }
-          break;
-        }
+        case 'pair_request_rejected':
+        case 'pair_request_accept':
+        case 'request_proof':
+        case 'request_proof_by_hash':
+        case 'request_proof_by_hash_failed':
         case 'proof_request_received':
         case 'proof_request_accept':
         case 'verifier_started':
         case 'prover_setup':
         case 'prover_started':
         case 'proof_request_start':
-          await send(to, rawData);
+        case 'proof_request_cancelled':
+        case 'proof_request_rejected':
+        case 'proof_request_cancel':
+        case 'proof_request_reject':
+        case 'proof_request_end':
+          send(to, rawData);
           break;
+        case 'pair_request_success': {
+          if (send(to, rawData)) {
+            pairs.set(to, clientId);
+            pairs.set(clientId, to);
+          }
+          break;
+        }
         default:
-          // send(to, rawData);
           console.log('unknown msg', msg);
           break;
       }
@@ -360,97 +339,24 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     clients.forEach((c) => c.send(data));
   }
 
-  async function send(clientId: string, data: RawData) {
-    return mutex.runExclusive(async () => {
-      const res = await new Promise((resolve) => {
-        const target = clients.get(clientId);
+  function send(clientId: string, data: RawData) {
+    const target = clients.get(clientId);
 
-        if (!target) {
-          client.send(clientNotFoundError(clientId), () => {
-            resolve(false);
-          });
-        } else {
-          target.send(data, (err) => {
-            resolve(!err);
-          });
-        }
-      });
-
-      return res;
-    });
+    if (!target) {
+      client.send(
+        bufferify({
+          error: {
+            message: `client "${clientId}" does not exist`,
+          },
+        }),
+      );
+      return false;
+    } else {
+      target.send(data);
+      return true;
+    }
   }
 });
-
-function clientNotFoundError(clientId: string) {
-  return bufferify({
-    error: {
-      message: `client "${clientId}" does not exist`,
-    },
-  });
-}
-
-function pairRequestSuccess(pairId: string) {
-  return bufferify({
-    method: 'pair_request_success',
-    params: {
-      pairId,
-    },
-  });
-}
-
-function pairRequestSent(pairId: string) {
-  return bufferify({
-    method: 'pair_request_sent',
-    params: {
-      pairId,
-    },
-  });
-}
-
-function pairRequestCancelled(pairId: string) {
-  return bufferify({
-    method: 'pair_request_cancelled',
-    params: {
-      pairId,
-    },
-  });
-}
-
-function pairRequestRejected(pairId: string) {
-  return bufferify({
-    method: 'pair_request_rejected',
-    params: {
-      pairId,
-    },
-  });
-}
-
-function proofRequestReceived(pluginHash: string) {
-  return bufferify({
-    method: 'proof_request_received',
-    params: {
-      pluginHash,
-    },
-  });
-}
-
-function proofRequestCancelled(pluginHash: string) {
-  return bufferify({
-    method: 'proof_request_cancelled',
-    params: {
-      pluginHash,
-    },
-  });
-}
-
-function proofRequestRejected(pluginHash: string) {
-  return bufferify({
-    method: 'proof_request_rejected',
-    params: {
-      pluginHash,
-    },
-  });
-}
 
 function bufferify(data: any) {
   return Buffer.from(JSON.stringify(data));
