@@ -260,7 +260,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   client.on('message', onClientMessage);
   client.on('close', endClient);
 
-  function endClient() {
+  async function endClient() {
     clients.delete(clientId);
 
     if (!clientId.includes(':proof')) {
@@ -268,7 +268,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
       if (pair) {
         pairs.delete(pair);
         pairs.delete(clientId);
-        send(
+        await send(
           pair,
           bufferify({
             method: 'pair_disconnect',
@@ -288,7 +288,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
       if (!msg) {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
-        send(pairedClientId + ':proof', rawData);
+        await send(pairedClientId + ':proof', rawData);
         return;
       }
 
@@ -316,10 +316,10 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         case 'proof_request_cancel':
         case 'proof_request_reject':
         case 'proof_request_end':
-          send(to, rawData);
+          await send(to, rawData);
           break;
         case 'pair_request_success': {
-          if (send(to, rawData)) {
+          if (await send(to, rawData)) {
             pairs.set(to, clientId);
             pairs.set(clientId, to);
           }
@@ -339,22 +339,30 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     clients.forEach((c) => c.send(data));
   }
 
-  function send(clientId: string, data: RawData) {
-    const target = clients.get(clientId);
+  async function send(clientId: string, data: RawData) {
+    return mutex.runExclusive(async () => {
+      const res = await new Promise((resolve) => {
+        const target = clients.get(clientId);
 
-    if (!target) {
-      client.send(
-        bufferify({
-          error: {
-            message: `client "${clientId}" does not exist`,
-          },
-        }),
-      );
-      return false;
-    } else {
-      target.send(data);
-      return true;
-    }
+        if (!target) {
+          client.send(
+            bufferify({
+              error: {
+                message: `client "${clientId}" does not exist`,
+              },
+            }),
+            (err) => {
+              resolve(false);
+            },
+          );
+        } else {
+          target.send(data, (err) => {
+            resolve(!err);
+          });
+        }
+      });
+      return res;
+    });
   }
 });
 
