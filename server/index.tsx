@@ -238,10 +238,6 @@ const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const pairs: Map<string, string> = new Map<string, string>();
 
 wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
-  // you have a new client
-  console.log('New Connection');
-  // add this client to the clients array
-
   const query = qs.parse((request.url || '').replace(/\/\?/g, ''));
   const clientId = (query?.clientId as string) || crypto.randomUUID();
   clients.set(clientId, client);
@@ -288,6 +284,8 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
       if (!msg) {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
+        // @ts-ignore
+        console.log('mpc', rawData.length);
         await send(pairedClientId + ':proof', rawData);
         return;
       }
@@ -316,9 +314,11 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         case 'proof_request_cancel':
         case 'proof_request_reject':
         case 'proof_request_end':
+          console.log(msg.method);
           await send(to, rawData);
           break;
         case 'pair_request_success': {
+          console.log(msg.method);
           if (await send(to, rawData)) {
             pairs.set(to, clientId);
             pairs.set(clientId, to);
@@ -340,28 +340,25 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   }
 
   async function send(clientId: string, data: RawData) {
-    return mutex.runExclusive(async () => {
-      const res = await new Promise((resolve) => {
-        const target = clients.get(clientId);
+    return new Promise((resolve) => {
+      const target = clients.get(clientId);
 
-        if (!target) {
-          client.send(
-            bufferify({
-              error: {
-                message: `client "${clientId}" does not exist`,
-              },
-            }),
-            (err) => {
-              resolve(false);
+      if (!target) {
+        client.send(
+          bufferify({
+            error: {
+              message: `client "${clientId}" does not exist`,
             },
-          );
-        } else {
-          target.send(data, (err) => {
-            resolve(!err);
-          });
-        }
-      });
-      return res;
+          }),
+          (err) => {
+            resolve(false);
+          },
+        );
+      } else {
+        target.send(data, (err) => {
+          resolve(!err);
+        });
+      }
     });
   }
 });
