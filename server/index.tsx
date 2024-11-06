@@ -20,8 +20,6 @@ import { createServer } from 'http';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import crypto from 'crypto';
 import qs from 'qs';
-import { Mutex } from 'async-mutex';
-const mutex = new Mutex();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -263,15 +261,15 @@ wss.on('connection', async (client: WebSocket, request: IncomingMessage) => {
     if (!clientId.includes(':proof')) {
       const pair = pairs.get(clientId);
       if (pair) {
-        // pairs.delete(pair);
-        // pairs.delete(clientId);
-        // await send(
-        //   pair,
-        //   bufferify({
-        //     method: 'pair_disconnect',
-        //     params: { pairId: clientId },
-        //   }),
-        // );
+        pairs.delete(pair);
+        pairs.delete(clientId);
+        await send(
+          pair,
+          bufferify({
+            method: 'pair_disconnect',
+            params: { pairId: clientId },
+          }),
+        );
       }
     }
 
@@ -324,6 +322,8 @@ wss.on('connection', async (client: WebSocket, request: IncomingMessage) => {
           }
           break;
         }
+        case 'ping':
+          break;
         default:
           console.log('unknown msg', msg);
           break;
@@ -339,27 +339,25 @@ wss.on('connection', async (client: WebSocket, request: IncomingMessage) => {
   }
 
   async function send(clientId: string, data: RawData) {
-    return mutex.runExclusive(async () => {
-      return new Promise((resolve) => {
-        const target = clients.get(clientId);
+    return new Promise((resolve) => {
+      const target = clients.get(clientId);
 
-        if (!target) {
-          client.send(
-            bufferify({
-              error: {
-                message: `client "${clientId}" does not exist`,
-              },
-            }),
-            (err) => {
-              resolve(false);
+      if (!target) {
+        client.send(
+          bufferify({
+            error: {
+              message: `client "${clientId}" does not exist`,
             },
-          );
-        } else {
-          target.send(data, (err) => {
-            resolve(!err);
-          });
-        }
-      });
+          }),
+          (err) => {
+            resolve(false);
+          },
+        );
+      } else {
+        target.send(data, (err) => {
+          resolve(!err);
+        });
+      }
     });
   }
 });
