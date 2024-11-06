@@ -237,15 +237,15 @@ server.listen(port, () => {
 const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
 const pairs: Map<string, string> = new Map<string, string>();
 
-wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
+wss.on('connection', async (client: WebSocket, request: IncomingMessage) => {
   const query = qs.parse((request.url || '').replace(/\/\?/g, ''));
   const clientId = (query?.clientId as string) || crypto.randomUUID();
   clients.set(clientId, client);
   console.log(`New Connection - ${clientId}`);
 
   if (!clientId.includes(':proof')) {
-    console.log('proof connection', clientId);
-    client.send(
+    await send(
+      clientId,
       bufferify({
         method: 'client_connect',
         params: { clientId },
@@ -263,16 +263,15 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
     if (!clientId.includes(':proof')) {
       const pair = pairs.get(clientId);
       if (pair) {
-        pairs.delete(pair);
-        pairs.delete(clientId);
-        console.log('disconnect', clientId);
-        await send(
-          pair,
-          bufferify({
-            method: 'pair_disconnect',
-            params: { pairId: clientId },
-          }),
-        );
+        // pairs.delete(pair);
+        // pairs.delete(clientId);
+        // await send(
+        //   pair,
+        //   bufferify({
+        //     method: 'pair_disconnect',
+        //     params: { pairId: clientId },
+        //   }),
+        // );
       }
     }
 
@@ -286,11 +285,6 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
       if (!msg) {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
-        // @ts-ignore
-        console.log('mpc', rawData.length, {
-          from: clientId,
-          to: pairedClientId + ':proof',
-        });
         await send(pairedClientId + ':proof', rawData);
         return;
       }
@@ -319,11 +313,11 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         case 'proof_request_cancel':
         case 'proof_request_reject':
         case 'proof_request_end':
-          console.log(msg.method, { from: clientId, to });
+          console.log('method:', msg.method);
           await send(to, rawData);
           break;
         case 'pair_request_success': {
-          console.log(msg.method, { from: clientId, to });
+          console.log('method:', msg.method);
           if (await send(to, rawData)) {
             pairs.set(to, clientId);
             pairs.set(clientId, to);
@@ -345,25 +339,27 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   }
 
   async function send(clientId: string, data: RawData) {
-    return new Promise((resolve) => {
-      const target = clients.get(clientId);
+    return mutex.runExclusive(async () => {
+      return new Promise((resolve) => {
+        const target = clients.get(clientId);
 
-      if (!target) {
-        client.send(
-          bufferify({
-            error: {
-              message: `client "${clientId}" does not exist`,
+        if (!target) {
+          client.send(
+            bufferify({
+              error: {
+                message: `client "${clientId}" does not exist`,
+              },
+            }),
+            (err) => {
+              resolve(false);
             },
-          }),
-          (err) => {
-            resolve(false);
-          },
-        );
-      } else {
-        target.send(data, (err) => {
-          resolve(!err);
-        });
-      }
+          );
+        } else {
+          target.send(data, (err) => {
+            resolve(!err);
+          });
+        }
+      });
     });
   }
 });
