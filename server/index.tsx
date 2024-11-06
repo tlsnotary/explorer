@@ -244,6 +244,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
   console.log(`New Connection - ${clientId}`);
 
   if (!clientId.includes(':proof')) {
+    console.log('proof connection', clientId);
     client.send(
       bufferify({
         method: 'client_connect',
@@ -264,6 +265,7 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
       if (pair) {
         pairs.delete(pair);
         pairs.delete(clientId);
+        console.log('disconnect', clientId);
         await send(
           pair,
           bufferify({
@@ -285,7 +287,10 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         const [cid] = clientId.split(':');
         const pairedClientId = pairs.get(cid);
         // @ts-ignore
-        console.log('mpc', rawData.length);
+        console.log('mpc', rawData.length, {
+          from: clientId,
+          to: pairedClientId + ':proof',
+        });
         await send(pairedClientId + ':proof', rawData);
         return;
       }
@@ -314,11 +319,11 @@ wss.on('connection', (client: WebSocket, request: IncomingMessage) => {
         case 'proof_request_cancel':
         case 'proof_request_reject':
         case 'proof_request_end':
-          console.log(msg.method);
+          console.log(msg.method, { from: clientId, to });
           await send(to, rawData);
           break;
         case 'pair_request_success': {
-          console.log(msg.method);
+          console.log(msg.method, { from: clientId, to });
           if (await send(to, rawData)) {
             pairs.set(to, clientId);
             pairs.set(clientId, to);
