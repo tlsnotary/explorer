@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
+declare global {
+  interface Window {
+    _paq?: any[];
+  }
+}
+
 const MatomoTracking = () => {
   const location = useLocation();
 
