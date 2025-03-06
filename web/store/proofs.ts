@@ -1,6 +1,5 @@
 import { ThunkDispatch } from 'redux-thunk';
 import { AppRootState } from './index';
-import type { Proof } from 'tlsn-js-v5/build/types';
 import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
 import { EXPLORER_URL } from '../utils/constants';
