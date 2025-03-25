@@ -151,6 +151,11 @@ var options = {
           force: true,
         },
         {
+          from: "node_modules/tlsn-js-v7/build",
+          to: path.join(__dirname, "build", "ui"),
+          force: true,
+        },
+        {
           from: "node_modules/tlsn-js/build",
           to: path.join(__dirname, "build", "ui"),
           force: true,

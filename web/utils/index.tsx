@@ -1,5 +1,6 @@
 import React, { ReactElement, useRef } from 'react';
 import { Attestation, AttestedData } from './types/types';
+import * as Comlink from 'comlink';
 
 export const readFileAsync = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -85,13 +86,29 @@ export function download(filename: string, content: string) {
 }
 
 let tlsnInitPromise: Promise<any> | null = null;
+// async function initTlsnJs() {
+//   if (tlsnInitPromise) return tlsnInitPromise;
+//   const { promise, resolve } = defer();
+//   tlsnInitPromise = promise;
+
+//   const { default: init } = await import('tlsn-js');
+//   await init();
+//   resolve();
+// }
+
 async function initTlsnJs() {
   if (tlsnInitPromise) return tlsnInitPromise;
   const { promise, resolve } = defer();
   tlsnInitPromise = promise;
 
-  const { default: init } = await import('tlsn-js');
-  await init();
+  if (typeof Worker !== 'undefined') {
+    const worker = new Worker(new URL('./worker.ts', import.meta.url));
+    const { init }: any = Comlink.wrap(worker);
+    await init();
+  } else {
+    const { default: init } = await import('tlsn-js');
+    await init();
+  }
   resolve();
 }
 
@@ -118,7 +135,7 @@ export async function verify(
       };
     }
     case '0.1.0-alpha.7': {
-      const { Presentation, Transcript } = await import('tlsn-js');
+      const { Presentation, Transcript } = await import('tlsn-js-v7');
       const tlsProof = new Presentation(attestation.data);
       const data = await tlsProof.verify();
       const transcript = new Transcript({
@@ -134,6 +151,32 @@ export async function verify(
 
       return {
         version: '0.1.0-alpha.7',
+        sent: transcript.sent(),
+        recv: transcript.recv(),
+        time: data.connection_info.time,
+        notaryUrl: notaryUrl,
+        notaryKey: publicKey,
+        websocketProxyUrl: attestation.meta.websocketProxyUrl,
+        verifierKey: verifyingKey,
+      };
+    }
+    case '0.1.0-alpha.8': {
+      const { Presentation, Transcript } = await import('tlsn-js');
+      const tlsProof = new Presentation(attestation.data);
+      const data = await tlsProof.verify();
+      const transcript = new Transcript({
+        sent: data.transcript.sent,
+        recv: data.transcript.recv,
+      });
+      const vk = await tlsProof.verifyingKey();
+      const verifyingKey = Buffer.from(vk.data).toString('hex');
+      const notaryUrl = convertNotaryWsToHttp(attestation.meta.notaryUrl);
+      const publicKey = await new NotaryServer(notaryUrl)
+        .publicKey()
+        .catch(() => '');
+
+      return {
+        version: '0.1.0-alpha.8',
         sent: transcript.sent(),
         recv: transcript.recv(),
         time: data.connection_info.time,
