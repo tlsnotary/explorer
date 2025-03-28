@@ -15,16 +15,14 @@ import { verify } from '../rs/verifier/index.node';
 import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
 import { convertNotaryWsToHttp } from '../web/utils';
-import { IncomingMessage } from 'node:http';
 import { createServer } from 'http';
-import { WebSocketServer, type RawData, type WebSocket } from 'ws';
-import crypto from 'crypto';
-import qs from 'qs';
+import { initWebsocketServer } from './services/ws';
 
 const app = express();
 const port = process.env.PORT || 3000;
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+
+initWebsocketServer(server);
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -232,151 +230,9 @@ server.listen(port, () => {
   console.log(`explorer server listening on port ${port}`);
 });
 
-const clients: Map<string, WebSocket> = new Map<string, WebSocket>();
-const pairs: Map<string, string> = new Map<string, string>();
-
-wss.on('connection', async (client: WebSocket, request: IncomingMessage) => {
-  const query = qs.parse((request.url || '').replace(/\/\?/g, ''));
-  const clientId = (query?.clientId as string) || crypto.randomUUID();
-  clients.set(clientId, client);
-  console.log(`New Connection - ${clientId}`);
-
-  if (!clientId.includes(':proof')) {
-    await send(
-      clientId,
-      bufferify({
-        method: 'client_connect',
-        params: { clientId },
-      }),
-    );
-  }
-
-  // set up client event listeners:
-  client.on('message', onClientMessage);
-  client.on('close', endClient);
-
-  async function endClient() {
-    clients.delete(clientId);
-
-    if (!clientId.includes(':proof')) {
-      const pair = pairs.get(clientId);
-      if (pair) {
-        pairs.delete(pair);
-        pairs.delete(clientId);
-        await send(
-          pair,
-          bufferify({
-            method: 'pair_disconnect',
-            params: { pairId: clientId },
-          }),
-        );
-      }
-    }
-
-    console.log(`Connection closed - ${clientId}`);
-  }
-
-  async function onClientMessage(rawData: RawData) {
-    try {
-      const msg = safeParseJSON(rawData.toString());
-
-      if (!msg) {
-        const [cid] = clientId.split(':');
-        const pairedClientId = pairs.get(cid);
-        await send(pairedClientId + ':proof', rawData);
-        return;
-      }
-
-      const { to } = msg.params;
-
-      switch (msg.method) {
-        case 'pair_request':
-        case 'pair_request_sent':
-        case 'pair_request_cancel':
-        case 'pair_request_cancelled':
-        case 'pair_request_reject':
-        case 'pair_request_rejected':
-        case 'pair_request_accept':
-        case 'request_proof':
-        case 'request_proof_by_hash':
-        case 'request_proof_by_hash_failed':
-        case 'proof_request_received':
-        case 'proof_request_accept':
-        case 'verifier_started':
-        case 'prover_setup':
-        case 'prover_started':
-        case 'proof_request_start':
-        case 'proof_request_cancelled':
-        case 'proof_request_rejected':
-        case 'proof_request_cancel':
-        case 'proof_request_reject':
-        case 'proof_request_end':
-          console.log('method:', msg.method);
-          await send(to, rawData);
-          break;
-        case 'pair_request_success': {
-          console.log('method:', msg.method);
-          if (await send(to, rawData)) {
-            pairs.set(to, clientId);
-            pairs.set(clientId, to);
-          }
-          break;
-        }
-        case 'ping':
-          break;
-        default:
-          console.log('unknown msg', msg);
-          break;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  // This function broadcasts messages to all webSocket clients
-  function broadcast(data: string) {
-    clients.forEach((c) => c.send(data));
-  }
-
-  async function send(clientId: string, data: RawData) {
-    return new Promise((resolve) => {
-      const target = clients.get(clientId);
-
-      if (!target) {
-        client.send(
-          bufferify({
-            error: {
-              message: `client "${clientId}" does not exist`,
-            },
-          }),
-          (err) => {
-            resolve(false);
-          },
-        );
-      } else {
-        target.send(data, (err) => {
-          resolve(!err);
-        });
-      }
-    });
-  }
-});
-
-function bufferify(data: any) {
-  return Buffer.from(JSON.stringify(data));
-}
-
 async function fetchPublicKeyFromNotary(notaryUrl: string) {
   const res = await fetch(notaryUrl + '/info');
   const json: any = await res.json();
   if (!json.publicKey) throw new Error('invalid response');
   return json.publicKey;
-}
-
-function safeParseJSON(data: string) {
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return null;
-  }
 }
