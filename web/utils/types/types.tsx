@@ -1,5 +1,9 @@
 export interface AttestedData {
-  version: '0.1.0-alpha.7' | '0.1.0-alpha.5';
+  version:
+    | '0.1.0-alpha.7'
+    | '0.1.0-alpha.8'
+    | '0.1.0-alpha.9'
+    | '0.1.0-alpha.5';
   time: number;
   sent: string;
   recv: string;
@@ -17,7 +21,7 @@ export type AttestationV0 = {
 };
 
 export type AttestationV1 = {
-  version: '0.1.0-alpha.7';
+  version: '0.1.0-alpha.7' | '0.1.0-alpha.8' | '0.1.0-alpha.9';
   data: string;
   meta: {
     notaryUrl: string;

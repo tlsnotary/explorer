@@ -1,5 +1,10 @@
 import React, { ReactElement, useRef } from 'react';
 import { Attestation, AttestedData } from './types/types';
+import * as Comlink from 'comlink';
+import { convertNotaryWsToHttp } from '../../utils/url';
+const { init, Presentation }: any = Comlink.wrap(
+  new Worker(new URL('./worker.ts', import.meta.url)),
+);
 
 export const readFileAsync = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -89,8 +94,6 @@ async function initTlsnJs() {
   if (tlsnInitPromise) return tlsnInitPromise;
   const { promise, resolve } = defer();
   tlsnInitPromise = promise;
-
-  const { default: init } = await import('tlsn-js');
   await init();
   resolve();
 }
@@ -117,9 +120,11 @@ export async function verify(
         notaryKey: key,
       };
     }
-    case '0.1.0-alpha.7': {
-      const { Presentation, Transcript } = await import('tlsn-js');
-      const tlsProof = new Presentation(attestation.data);
+    case '0.1.0-alpha.7':
+    case '0.1.0-alpha.8':
+    case '0.1.0-alpha.9':
+      const { Transcript } = await import('tlsn-js');
+      const tlsProof = await new Presentation(attestation.data);
       const data = await tlsProof.verify();
       const transcript = new Transcript({
         sent: data.transcript.sent,
@@ -133,7 +138,7 @@ export async function verify(
         .catch(() => '');
 
       return {
-        version: '0.1.0-alpha.7',
+        version: attestation.version,
         sent: transcript.sent(),
         recv: transcript.recv(),
         time: data.connection_info.time,
@@ -142,19 +147,9 @@ export async function verify(
         websocketProxyUrl: attestation.meta.websocketProxyUrl,
         verifierKey: verifyingKey,
       };
-    }
   }
 
   throw new Error('Invalid Proof');
-}
-
-export function convertNotaryWsToHttp(notaryWs: string) {
-  const { protocol, pathname, hostname, port } = new URL(notaryWs);
-  const p = protocol === 'wss:' ? 'https:' : 'http:';
-  const pt = port ? `:${port}` : '';
-  const path = pathname === '/' ? '' : pathname.replace('/notarize', '');
-  const h = hostname === 'localhost' ? '127.0.0.1' : hostname;
-  return p + '//' + h + pt + path;
 }
 
 function defer(): {
