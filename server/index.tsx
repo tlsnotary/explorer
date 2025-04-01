@@ -14,12 +14,12 @@ import { verify } from '../rs/verifier/index.node';
 // @ts-ignore
 import { verify as verifyV7 } from '../rs/0.1.0-alpha.7/index.node';
 import { Attestation } from '../web/utils/types/types';
-import { convertNotaryWsToHttp } from '../web/utils';
 import { IncomingMessage } from 'node:http';
 import { createServer } from 'http';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import crypto from 'crypto';
 import qs from 'qs';
+import { convertNotaryWsToHttp } from '../utils/url';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -114,7 +114,7 @@ app.get('/ipfs/:cid', async (req, res) => {
         notaryUrl: jsonProof.notaryUrl,
         notaryKey: notaryPem,
       };
-    } else if (jsonProof.version === '0.1.0-alpha.7') {
+    } else if (jsonProof.version) {
       const notaryUrl = convertNotaryWsToHttp(jsonProof.meta.notaryUrl);
       const notaryPem = await fetchPublicKeyFromNotary(notaryUrl).catch(
         () => '',
@@ -122,7 +122,7 @@ app.get('/ipfs/:cid', async (req, res) => {
       const proof = await verifyV7(jsonProof.data, notaryPem);
       proof.notaryUrl = jsonProof.meta.notaryUrl;
       storeConfig.proofs.ipfs[req.params.cid].proof = {
-        version: '0.1.0-alpha.7',
+        version: jsonProof.version,
         time: proof.time,
         sent: proof.sent,
         recv: proof.recv,

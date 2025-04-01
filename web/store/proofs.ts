@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import deepEqual from 'fast-deep-equal';
 import { EXPLORER_URL } from '../utils/constants';
 import { Attestation, AttestedData } from '../utils/types/types';
-import { verify } from '../utils';
 
 enum ActionType {
   SetIPFSProof = 'proofs/setIPFSProof',
@@ -54,9 +53,12 @@ export const fetchProofFromIPFS =
       data = old.raw;
     }
 
-    const proof = await verify(data, notaryKey);
+    if (typeof window !== 'undefined') {
+      const { verify } = await import('../utils');
+      const proof = await verify(data, notaryKey);
 
-    dispatch(setIPFSProof({ cid, proof, raw: data }));
+      dispatch(setIPFSProof({ cid, proof, raw: data }));
+    }
   };
 
 export const setIPFSProof = (

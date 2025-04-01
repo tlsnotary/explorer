@@ -7,7 +7,6 @@ import { FileDropdown } from '../FileDropdown';
 import { PubkeyInput } from '../../pages/PubkeyInput';
 import { AttestedData } from '../../utils/types/types';
 import { File } from '@web-std/file';
-import { verify } from '../../utils';
 
 export default function SharedProof(): ReactElement {
   const { cid } = useParams();
@@ -33,6 +32,8 @@ export default function SharedProof(): ReactElement {
   const onVerify = useCallback(
     async (key = '') => {
       if (!proofData?.raw) return;
+      const { verify } = await import('../../utils');
+
       const resp = await verify(proofData?.raw, key);
       setVerifiedProof(resp);
     },

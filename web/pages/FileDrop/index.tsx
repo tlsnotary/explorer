@@ -1,6 +1,5 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { readFileAsync, safeParseJSON, verify } from '../../utils';
 import FileUploadInput from '../../components/FileUploadInput';
 import ProofViewer from '../../components/ProofViewer';
 import {
@@ -24,6 +23,7 @@ export default function FileDrop(): ReactElement {
 
   const onVerify = useCallback(async (json: Attestation, key = '') => {
     try {
+      const { verify } = await import('../../utils');
       const resp = await verify(json, key);
       setVerifiedProof(resp);
       setStep('result');
@@ -54,6 +54,7 @@ export default function FileDrop(): ReactElement {
 
       setError('');
 
+      const { readFileAsync, safeParseJSON } = await import('../../utils');
       const proofContent = await readFileAsync(file);
       const json: Attestation = safeParseJSON(proofContent);
 
