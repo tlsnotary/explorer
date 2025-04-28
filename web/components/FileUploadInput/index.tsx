@@ -8,6 +8,14 @@ export default function FileUploadInput(props: {
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    props.onFileChange(e);
+
+    if (typeof window !== 'undefined' && window._paq && e.target.files?.length) {
+      window._paq.push(['trackEvent', 'AttestationUpload', 'File', 'Uploaded']);
+    }
+  };
+
   return (
     <div
       className={classNames(
@@ -30,7 +38,7 @@ export default function FileUploadInput(props: {
             <input
               type="file"
               className="absolute w-full h-full top-0 left-0 opacity-0 z-10 cursor-pointer"
-              onChange={props.onFileChange}
+              onChange={handleFileChange}
               accept=".json"
               disabled={props.disabled || props.loading}
             />
