@@ -4,6 +4,10 @@
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [apache-badge]: https://img.shields.io/github/license/saltstack/salt
 
+> ⚠️ **DEPRECATED** (Effective Date: May 15, 2025)  
+> This repository has been deprecated.  
+> To visualize TLSNotary attestations, please use the [Browser Extension](https://github.com/tlsnotary/tlsn-extension) instead.
+
 # TLSN Explorer
 
 TLSN Explorer is server that will handle the social discovery and visualization of proofs generated from the TLSNotary protocol.
